@@ -51,13 +51,13 @@ public:
     * 
     * @return value of STO, 0 or 1
     */
-    int getSTO();
+    void getSTO();
 
     /**
      * Get the state of MC_KEY_IN
      * 
      */
-    int getMCKey();
+    void getMCKey();
 
     /**
      * Set the Precharge state
@@ -139,11 +139,11 @@ private:
     /** GPIO instance to monitor CONT_CTL */
     IO::GPIO& cont;
     /** GPIO instance to monitor BATTERY_1_OK */
-    IO::GPIO& batteryOne
+    IO::GPIO& batteryOne;
     /** GPIO instance to monitor BATTERY_2_OK */
-    IO::GPIO& batteryTwo
+    IO::GPIO& batteryTwo;
     /** GPIO instance to monitor ESTOP_STATUS */
-    IO::GPIO& eStop
+    IO::GPIO& eStop;
 
     IO::GPIO::State keyStatus;
     IO::GPIO::State stoStatus;

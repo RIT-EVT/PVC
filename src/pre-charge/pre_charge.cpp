@@ -1,16 +1,19 @@
 #include <pre-charge/pre_charge.hpp>
 
-#include <libs/EVT-core/include/EVT/dev/platform/f3xx/f302x8/Timerf302x8.hpp>
+#include <EVT/utils/time.hpp>
+
+namespace time = EVT::core::time;
 
 namespace pre_charge {
 
-pre_charge::pre_charge(IO::GPIO& key, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont) : gpio(key),
-                                                                        gpio(pc),
-                                                                        gpio(dc),
-                                                                        gpio(cont),
-                                                                        gpio(batteryOne), 
-                                                                        gpio(batteryTwo), 
-                                                                        gpio(eStop) {
+pre_charge::pre_charge(IO::GPIO& key, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
+                        IO::GPIO& batteryOne, IO::GPIO& batteryTwo, IO::GPIO& eStop) :  key(key),
+                                                                                        pc(pc),
+                                                                                        dc(dc),
+                                                                                        cont(cont),
+                                                                                        batteryOne(batteryOne), 
+                                                                                        batteryTwo(batteryTwo), 
+                                                                                        eStop(eStop) {
     keyStatus = IO::GPIO::State::LOW;
     stoStatus = IO::GPIO::State::LOW;
     batteryOneStatus = IO::GPIO::State::LOW;
@@ -19,18 +22,18 @@ pre_charge::pre_charge(IO::GPIO& key, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont
 }
 
 void pre_charge::handle() {
-    stoStatus = getSTO();   //update value of STO
-    keyStatus = getMCKey(); //update value of MC_KEY_IN
+    getSTO();   //update value of STO
+    getMCKey(); //update value of MC_KEY_IN
 
     switch (state) {
         case State::MC_OFF:
             mcOffState();
             break;
         case State::ESTOPWAIT:
-            eStopStatus();
+            eStopState();
             break;
         case State::PRECHARGE:
-            prechargeStatus();
+            prechargeState();
             break;
         case State::CONT_CLOSE:
             contCloseState();
@@ -49,7 +52,7 @@ void pre_charge::handle() {
         }
 }
 
-int pre_charge::getSTO() {
+void pre_charge::getSTO() {
     batteryOneStatus = batteryOne.readPin();
     batteryTwoStatus = batteryTwo.readPin();
     eStopStatus = eStop.readPin();
@@ -57,20 +60,14 @@ int pre_charge::getSTO() {
     if(batteryOneStatus == IO::GPIO::State::HIGH && 
     batteryTwoStatus == IO::GPIO::State::HIGH && 
     eStopStatus == IO::GPIO::State::HIGH) {
-        return 1;
+        stoStatus = IO::GPIO::State::HIGH;
     } else {
-        return 0;
+        stoStatus = IO::GPIO::State::LOW;
     }
 }
 
-int pre_charge::getMCKey() {
+void pre_charge::getMCKey() {
     keyStatus = key.readPin();
-
-    if(keyStatus == IO::GPIO::State::HIGH) {
-        return 1;
-    } else {
-        return 0;
-    }
 }
 
 void pre_charge::setPrecharge(int state) {
@@ -98,23 +95,23 @@ void pre_charge::setContactor(int state) {
 }
 
 void pre_charge::mcOffState() {
-    if(stoStatus == 0) {
+    if(stoStatus == IO::GPIO::State::LOW) {
         state = State::ESTOPWAIT;
-    } else if(stoStatus == 1 && keyStatus == 1) {
+    } else if(stoStatus == IO::GPIO::State::HIGH && keyStatus == IO::GPIO::State::HIGH) {
         state = State::PRECHARGE;
     }
     //else stay on MC_OFF
 }
 
 void pre_charge::mcOnState() {
-    if(stoStatus == 0 || keyStatus == 0) {
+    if(stoStatus == IO::GPIO::State::LOW || keyStatus == IO::GPIO::State::LOW) {
         state = State::CONT_OPEN;
     }
     //else stay on MC_ON
 }
 
 void pre_charge::eStopState() {
-    if(stoStatus == 1) {
+    if(stoStatus == IO::GPIO::State::HIGH) {
         state = State::MC_OFF;
     }
     //else stay on E-Stop
@@ -124,9 +121,9 @@ void pre_charge::prechargeState() {
     setPrecharge(1);
     time::wait(5);  //wait 5 tau
     setPrecharge(0);
-    if(stoStatus == 0 || keyStatus == 0) {
+    if(stoStatus == IO::GPIO::State::LOW || keyStatus == IO::GPIO::State::LOW) {
         state = State::CONT_OPEN;
-    } else if(stoStatus == 1) {
+    } else if(stoStatus == IO::GPIO::State::HIGH) {
         state = State::CONT_CLOSE;
     }
 }
@@ -145,9 +142,9 @@ void pre_charge::contOpenState() {
 
 void pre_charge::contCloseState() {
     setContactor(1);
-    if(stoStatus == 0 || keyStatus == 0) {
+    if(stoStatus == IO::GPIO::State::LOW || keyStatus == IO::GPIO::State::LOW) {
         state = State::CONT_OPEN;
-    } else if(stoStatus == 1 && keyStatus == 1) {
+    } else if(stoStatus == IO::GPIO::State::HIGH && keyStatus == IO::GPIO::State::HIGH) {
         state = State::MC_ON;
     }
 }
