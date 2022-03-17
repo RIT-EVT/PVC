@@ -1,9 +1,6 @@
 /**
- * This is a basic sample of using the UART module. The program provides a
- * basic echo functionality where the uart will write back whatever the user
- * enters.
+ * This is the primary State machine handler for the pre-charge board
  */
-#include <EVT/io/UART.hpp>
 #include <EVT/io/manager.hpp>
 #include <EVT/io/pin.hpp>
 
@@ -13,16 +10,16 @@ int main() {
     // Initialize system
     IO::init();
 
-    // Setup UART
-    IO::UART& uart = IO::getUART<IO::Pin::UART_TX, IO::Pin::UART_RX>(9600);
-
-    // String to store user input
-    char buf[100];
+    // Set up pre_charge and STO handler
+    pre_charge::pre_charge precharge = pre_charge::pre_charge(IO::getGPIO<IO::Pin::PA_0>(),
+                                                              IO::getGPIO<IO::Pin::PA_3>(),
+                                                              IO::getGPIO<IO::Pin::PA_4>(),
+                                                              IO::getGPIO<IO::Pin::PA_5>(),
+                                                              IO::getGPIO<IO::Pin::PA_1>(),
+                                                              IO::getGPIO<IO::Pin::PA_2>(),
+                                                              IO::getGPIO<IO::Pin::PA_6>());
 
     while (1) {
-        // Read user input
-        uart.printf("Enter message: ");
-        uart.gets(buf, 100);
-        uart.printf("\n\recho: %s\n\r", buf);
+        precharge.handle(); //update state machine
     }
 }
