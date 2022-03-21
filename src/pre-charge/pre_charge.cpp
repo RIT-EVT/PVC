@@ -2,6 +2,7 @@
 
 #include <EVT/utils/time.hpp>
 
+namespace IO = EVT::core::IO;
 namespace time = EVT::core::time;
 
 namespace pre_charge {
@@ -26,25 +27,25 @@ void pre_charge::handle() {
     getMCKey(); //update value of MC_KEY_IN
 
     switch (state) {
-        case State::MC_OFF:
+        case pre_charge::State::MC_OFF:
             mcOffState();
             break;
-        case State::ESTOPWAIT:
+        case pre_charge::State::ESTOPWAIT:
             eStopState();
             break;
-        case State::PRECHARGE:
+        case pre_charge::State::PRECHARGE:
             prechargeState();
             break;
-        case State::CONT_CLOSE:
+        case pre_charge::State::CONT_CLOSE:
             contCloseState();
             break;
-        case State::MC_ON:
+        case pre_charge::State::MC_ON:
             mcOnState();
             break;
-        case State::CONT_OPEN:
+        case pre_charge::State::CONT_OPEN:
             contOpenState();
             break;
-        case State::DISCHARGE:
+        case pre_charge::State::DISCHARGE:
             dischargeState();
             break;
         default:
@@ -147,6 +148,21 @@ void pre_charge::contCloseState() {
     } else if(stoStatus == IO::GPIO::State::HIGH && keyStatus == IO::GPIO::State::HIGH) {
         state = State::MC_ON;
     }
+}
+
+std::string pre_charge::printState() {
+    std::string str = "";
+    str.append("State Machine Report:\n\r");
+    
+    str.append("MC_KEY_IN: ");
+    str.append(std::to_string(static_cast<int>(keyStatus)));
+    str.append("\n\r");
+
+    str.append("STO: ");
+    str.append(std::to_string(static_cast<int>(stoStatus)));
+    str.append("\n\n\r");
+
+    return str;
 }
 
 }// namespace pre_charge

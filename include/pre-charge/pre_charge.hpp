@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include <EVT/io/GPIO.hpp>
 
 namespace IO = EVT::core::IO;
@@ -128,6 +130,12 @@ public:
      * State: State::CONT_CLOSE
      */
     void contCloseState();
+
+    /**
+     * Pretty print the current state machine status for testing
+     * 
+     */
+    std::string printState();
 
 private:
     /** GPIO instance to monitor KEY_IN */
