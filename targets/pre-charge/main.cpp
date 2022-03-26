@@ -11,9 +11,7 @@ namespace IO = EVT::core::IO;
 int main() {
     // Initialize system
     IO::init();
-    IO::UART& uart = IO::getUART<IO::Pin::UART_TX, IO::Pin::UART_RX>(9600);
-
-    uart.printf("-----TESTING PRE-CHARGE STATE MACHINE-----\n\r");
+//    IO::UART& uart = IO::getUART<IO::Pin::UART_TX, IO::Pin::UART_RX>(9600);
 
     // Set up pre_charge
     IO::GPIO& key           = IO::getGPIO<IO::Pin::PA_0>(IO::GPIO::Direction::INPUT);
@@ -25,11 +23,9 @@ int main() {
     IO::GPIO& eStop         = IO::getGPIO<IO::Pin::PA_6>(IO::GPIO::Direction::INPUT);
     pre_charge::pre_charge precharge(key, pc, dc, cont, batteryOne, batteryTwo, eStop);
 
-    uart.printf("pre_charge instantiated\n\r");
-
     while (1) {
         precharge.handle(); //update state machine
 
-        uart.printf(precharge.printState().c_str()); //print status
+//        uart.printf(precharge.printState().c_str()); //print status
     }
 }

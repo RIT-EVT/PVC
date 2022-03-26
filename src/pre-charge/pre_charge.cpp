@@ -15,6 +15,8 @@ pre_charge::pre_charge(IO::GPIO& key, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont
                                                                                         batteryOne(batteryOne), 
                                                                                         batteryTwo(batteryTwo), 
                                                                                         eStop(eStop) {
+    state = State::MC_OFF;
+
     keyStatus = IO::GPIO::State::LOW;
     stoStatus = IO::GPIO::State::LOW;
     batteryOneStatus = IO::GPIO::State::LOW;
@@ -58,8 +60,8 @@ void pre_charge::getSTO() {
     batteryTwoStatus = batteryTwo.readPin();
     eStopStatus = eStop.readPin();
 
-    if(batteryOneStatus == IO::GPIO::State::HIGH && 
-    batteryTwoStatus == IO::GPIO::State::HIGH && 
+    if(batteryOneStatus == IO::GPIO::State::HIGH &&
+    batteryTwoStatus == IO::GPIO::State::HIGH &&
     eStopStatus == IO::GPIO::State::HIGH) {
         stoStatus = IO::GPIO::State::HIGH;
     } else {
@@ -152,17 +154,63 @@ void pre_charge::contCloseState() {
 
 std::string pre_charge::printState() {
     std::string str = "";
-    str.append("State Machine Report:\n\r");
     
     str.append("MC_KEY_IN: ");
     str.append(std::to_string(static_cast<int>(keyStatus)));
-    str.append("\n\r");
+    str.append("\t");
+
+    str.append("[");
+    str.append(std::to_string(static_cast<int>(batteryOneStatus)));
+    str.append(" : ");
+    str.append(std::to_string(static_cast<int>(batteryTwoStatus)));
+    str.append(" : ");
+    str.append(std::to_string(static_cast<int>(eStopStatus)));
+    str.append("] -> ");
 
     str.append("STO: ");
     str.append(std::to_string(static_cast<int>(stoStatus)));
-    str.append("\n\n\r");
+    str.append("\t");
+
+    str.append("Cont: ");
+    str.append(std::to_string(static_cast<int>(cont.readPin())));
+    str.append("\t");
+
+    str.append("Current State: ");
+    str.append(stateString(state));
+    str.append("\n\r");
 
     return str;
+}
+
+std::string pre_charge::stateString(State currentState) {
+    std::string s("unknown");
+
+    switch (currentState) {
+        case State::MC_OFF:
+            s = "MC_OFF";
+            break;
+        case State::ESTOPWAIT:
+            s = "ESTOPWAIT";
+            break;
+        case State::PRECHARGE:
+            s = "PRECHARGE";
+            break;
+        case State::CONT_CLOSE:
+            s = "CONT_CLOSE";
+            break;
+        case State::MC_ON:
+            s = "MC_ON";
+            break;
+        case State::CONT_OPEN:
+            s = "CONT_OPEN";
+            break;
+        case State::DISCHARGE:
+            s = "DISCHARGE";
+            break;
+        default:
+            break; 
+    }
+    return s;
 }
 
 }// namespace pre_charge

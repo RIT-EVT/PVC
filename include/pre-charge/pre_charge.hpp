@@ -137,6 +137,15 @@ public:
      */
     std::string printState();
 
+    /**
+     * Testing helper function to return the string value of
+     * the current state enum
+     * 
+     * @param currentState 
+     * @return std::string 
+     */
+    std::string stateString(State currentState);
+
 private:
     /** GPIO instance to monitor KEY_IN */
     IO::GPIO& key;
