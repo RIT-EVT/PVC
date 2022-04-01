@@ -7,14 +7,17 @@ namespace time = EVT::core::time;
 
 namespace pre_charge {
 
-pre_charge::pre_charge(IO::GPIO& key, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-                        IO::GPIO& batteryOne, IO::GPIO& batteryTwo, IO::GPIO& eStop) :  key(key),
-                                                                                        pc(pc),
-                                                                                        dc(dc),
-                                                                                        cont(cont),
-                                                                                        batteryOne(batteryOne), 
-                                                                                        batteryTwo(batteryTwo), 
-                                                                                        eStop(eStop) {
+pre_charge::pre_charge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
+                        IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
+                        IO::GPIO& apm, IO::GPIO& forward) : key(key),
+                                                            batteryOne(batteryOne),
+                                                            batteryTwo(batteryTwo),
+                                                            eStop(eStop),
+                                                            pc(pc),
+                                                            dc(dc),
+                                                            cont(cont),
+                                                            apm(apm),
+                                                            forward(forward) {
     state = State::MC_OFF;
 
     keyStatus = IO::GPIO::State::LOW;
@@ -22,6 +25,7 @@ pre_charge::pre_charge(IO::GPIO& key, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont
     batteryOneStatus = IO::GPIO::State::LOW;
     batteryTwoStatus = IO::GPIO::State::LOW;
     eStopStatus = IO::GPIO::State::LOW;
+    //TODO: Add GFD
 }
 
 void pre_charge::handle() {
@@ -50,6 +54,8 @@ void pre_charge::handle() {
         case pre_charge::State::DISCHARGE:
             dischargeState();
             break;
+        case pre_charge::State::FORWARD_DISABLE:
+            forwardDisableState();
         default:
             break;
         }
@@ -59,10 +65,11 @@ void pre_charge::getSTO() {
     batteryOneStatus = batteryOne.readPin();
     batteryTwoStatus = batteryTwo.readPin();
     eStopStatus = eStop.readPin();
+    //TODO: Add GFD
 
     if(batteryOneStatus == IO::GPIO::State::HIGH &&
     batteryTwoStatus == IO::GPIO::State::HIGH &&
-    eStopStatus == IO::GPIO::State::HIGH) {
+    eStopStatus == IO::GPIO::State::LOW) {
         stoStatus = IO::GPIO::State::HIGH;
     } else {
         stoStatus = IO::GPIO::State::LOW;
@@ -97,6 +104,22 @@ void pre_charge::setContactor(int state) {
     }
 }
 
+void pre_charge::setAPM(int state) {
+        if(state) {
+        apm.writePin(IO::GPIO::State::HIGH);
+    } else {
+        apm.writePin(IO::GPIO::State::LOW);
+    }
+}
+
+void pre_charge::setForward(int state) {
+    if(state) {
+        forward.writePin(IO::GPIO::State::HIGH);
+    } else {
+        forward.writePin(IO::GPIO::State::LOW);
+    }
+}
+
 void pre_charge::mcOffState() {
     if(stoStatus == IO::GPIO::State::LOW) {
         state = State::ESTOPWAIT;
@@ -108,7 +131,7 @@ void pre_charge::mcOffState() {
 
 void pre_charge::mcOnState() {
     if(stoStatus == IO::GPIO::State::LOW || keyStatus == IO::GPIO::State::LOW) {
-        state = State::CONT_OPEN;
+        state = State::FORWARD_DISABLE;
     }
     //else stay on MC_ON
 }
@@ -145,11 +168,20 @@ void pre_charge::contOpenState() {
 
 void pre_charge::contCloseState() {
     setContactor(1);
+    setForward(1);
+    setAPM(1);
     if(stoStatus == IO::GPIO::State::LOW || keyStatus == IO::GPIO::State::LOW) {
         state = State::CONT_OPEN;
     } else if(stoStatus == IO::GPIO::State::HIGH && keyStatus == IO::GPIO::State::HIGH) {
         state = State::MC_ON;
     }
+}
+
+void pre_charge::forwardDisableState() {
+    setForward(0);
+    time::wait(5000);
+    setAPM(0);
+    state = State::CONT_OPEN;
 }
 
 std::string pre_charge::printState() {
@@ -173,6 +205,14 @@ std::string pre_charge::printState() {
 
     str.append("Cont: ");
     str.append(std::to_string(static_cast<int>(cont.readPin())));
+    str.append("\t");
+
+    str.append("APM: ");
+    str.append(std::to_string(static_cast<int>(apm.readPin())));
+    str.append("\t");
+
+    str.append("Forward: ");
+    str.append(std::to_string(static_cast<int>(forward.readPin())));
     str.append("\t");
 
     str.append("Current State: ");
@@ -206,6 +246,9 @@ std::string pre_charge::stateString(State currentState) {
             break;
         case State::DISCHARGE:
             s = "DISCHARGE";
+            break;
+        case State::FORWARD_DISABLE:
+            s = "FORWARD_DISABLE";
             break;
         default:
             break; 

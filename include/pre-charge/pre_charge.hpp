@@ -30,15 +30,18 @@ public:
         // When the contactor is open
         CONT_OPEN = 5u,
         // When the contactor is closed
-        CONT_CLOSE = 6u
+        CONT_CLOSE = 6u,
+        // When the forward enable is disabled
+        FORWARD_DISABLE = 7u
     };
 
     /**
      * Constructor for pre-charge state machine
      * 
      */
-    pre_charge(IO::GPIO& key, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-                IO::GPIO& batteryOne, IO::GPIO& batteryTwo, IO::GPIO& eStop);
+    pre_charge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
+                        IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
+                        IO::GPIO& apm, IO::GPIO& forward);
 
     /**
      * Handler running the pre-charge state switching
@@ -81,6 +84,20 @@ public:
      * @param state 0 = contactor open, 1 = contactor closed
      */
     void setContactor(int state);
+
+    /**
+     * Set the Forward state
+     * 
+     * @param state 0 = forward disabled, 1 = forward enabled
+     */
+    void setForward(int state);
+
+    /**
+     * Set the APM state
+     * 
+     * @param state 0 = APM disabled, 1 = APM enabled
+     */
+    void setAPM(int state);
 
     /**
      * Handles when the MC is powered off.
@@ -132,6 +149,13 @@ public:
     void contCloseState();
 
     /**
+     * Handles when the Forward Enable is to be disabled.
+     * 
+     * State: State::FORWARD_DISABLE
+     */
+    void forwardDisableState();
+
+    /**
      * Pretty print the current state machine status for testing
      * 
      */
@@ -149,18 +173,22 @@ public:
 private:
     /** GPIO instance to monitor KEY_IN */
     IO::GPIO& key;
-    /** GPIO instance to monitor PC_CTL */
-    IO::GPIO& pc;
-    /** GPIO instance to monitor DC_CTL */
-    IO::GPIO& dc;
-    /** GPIO instance to monitor CONT_CTL */
-    IO::GPIO& cont;
     /** GPIO instance to monitor BATTERY_1_OK */
     IO::GPIO& batteryOne;
     /** GPIO instance to monitor BATTERY_2_OK */
     IO::GPIO& batteryTwo;
     /** GPIO instance to monitor ESTOP_STATUS */
     IO::GPIO& eStop;
+    /** GPIO instance to toggle PC_CTL */
+    IO::GPIO& pc;
+    /** GPIO instance to toggle DC_CTL */
+    IO::GPIO& dc;
+    /** GPIO instance to toggle CONT_CTL */
+    IO::GPIO& cont;
+    /** GPIO instance to toggle APM_CTL */
+    IO::GPIO& apm;
+    /** GPIO instance to toggle FW_EN_CTL */
+    IO::GPIO& forward;
 
     IO::GPIO::State keyStatus;
     IO::GPIO::State stoStatus;
