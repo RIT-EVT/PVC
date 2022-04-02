@@ -219,18 +219,10 @@ private:
     State state;
 
     /**
-     * This sample data will be exposed over CAN through the object
-     * dictionary. The address of the variable will be included in the
-     * object dictionary and can be updated via SDO via a CANopen client.
-     * This device will then broadcast the value via a triggered PDO.
-     */
-    uint8_t sampleData;
-
-    /**
      * Have to know the size of the object dictionary for initialization
      * process.
      */
-    static constexpr uint8_t OBJECT_DICTIONARY_SIZE = 7;
+    static constexpr uint8_t OBJECT_DICTIONARY_SIZE = 16;
 
     /**
      * The object dictionary itself. Will be populated by this object during
@@ -249,22 +241,22 @@ private:
         // 4: Serial Number
         {
             .Key = CO_KEY(0x1018, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = 0,
+            .Type = nullptr,
             .Data = (uintptr_t) 0x10,
         },
         {
             .Key = CO_KEY(0x1018, 2, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = 0,
+            .Type = nullptr,
             .Data = (uintptr_t) 0x11,
         },
         {
             .Key = CO_KEY(0x1018, 3, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = 0,
+            .Type = nullptr,
             .Data = (uintptr_t) 0x12,
         },
         {
             .Key = CO_KEY(0x1018, 4, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = 0,
+            .Type = nullptr,
             .Data = (uintptr_t) 0x13,
         },
 
@@ -273,13 +265,67 @@ private:
         // 2: Server -> Client ID, default is 0x580 + NODE_ID
         {
             .Key = CO_KEY(0x1200, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = 0,
+            .Type = nullptr,
             .Data = (uintptr_t) 0x600 + NODE_ID,
         },
         {
             .Key = CO_KEY(0x1200, 2, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = 0,
+            .Type = nullptr,
             .Data = (uintptr_t) 0x580 + NODE_ID,
+        },
+
+        // TPDO0 settings
+        // 0: The TPDO number, default 0
+        // 1: The COB-ID used by TPDO0, provided as a function of the TPDO number
+        // 2: How the TPO is triggered, default to manual triggering
+        // 3: Inhibit time, defaults to 0
+        // 5: Timer trigger time in 1ms units, 0 will disable the timer based triggering
+        {
+            .Key = CO_KEY(0x1800, 0, CO_UNSIGNED8 | CO_OBJ_D__R_),
+            .Type = nullptr,
+            .Data = (uintptr_t) 0,
+        },
+        {
+            .Key = CO_KEY(0x1800, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
+            .Type = nullptr,
+            .Data = (uintptr_t) CO_COBID_TPDO_DEFAULT(0),
+        },
+        {
+            .Key = CO_KEY(0x1800, 2, CO_UNSIGNED8 | CO_OBJ_D__R_),
+            .Type = nullptr,
+            .Data = (uintptr_t) 0xFE,
+        },
+        {
+            .Key = CO_KEY(0x1800, 3, CO_UNSIGNED16 | CO_OBJ_D__R_),
+            .Type = nullptr,
+            .Data = (uintptr_t) 0,
+        },
+        {
+            .Key = CO_KEY(0x1800, 5, CO_UNSIGNED16 | CO_OBJ_D__R_),
+            .Type = CO_TEVENT,
+            .Data = (uintptr_t) 2000,
+        },
+
+        // TPDO0 mapping, determins the PDO messages to send when TPDO1 is triggered
+        // 0: The number of PDO message associated with the TPDO
+        // 1: Link to the first PDO message
+        // n: Link to the nth PDO message
+        {
+            .Key = CO_KEY(0x1A00, 0, CO_UNSIGNED8 | CO_OBJ_D__R_),
+            .Type = nullptr,
+            .Data = (uintptr_t) 1},
+        {
+            .Key = CO_KEY(0x1A00, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
+            .Type = nullptr,
+            .Data = CO_LINK(0x2100, 0, 8)// Link to sample data position in dictionary
+        },
+
+        // User defined data, this will be where we put elements that can be
+        // accessed via SDO and depeneding on configuration PDO
+        {
+            .Key = CO_KEY(0x2100, 0, CO_UNSIGNED8 | CO_OBJ___PRW),
+            .Type = nullptr,
+            .Data = (uintptr_t) &state,
         },
 
         // End of dictionary marker

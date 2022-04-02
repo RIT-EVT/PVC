@@ -42,7 +42,9 @@ void canInterruptHandler(IO::CANMessage& message, void* priv) {
 ///////////////////////////////////////////////////////////////////////////////
 // CANopen specific Callbacks. Need to be defined in some location
 ///////////////////////////////////////////////////////////////////////////////
-extern "C" void CONodeFatalError(void) {}
+extern "C" void CONodeFatalError(void) {
+    log::LOGGER.log(log::Logger::LogLevel::ERROR, "Fatal CANopen error");
+}
 
 extern "C" void COIfCanReceive(CO_IF_FRM* frm) {}
 
@@ -109,10 +111,15 @@ int main() {
     IO::CAN::CANStatus result = can.connect();
 
     if (result != IO::CAN::CANStatus::OK) {
-        uart.printf("Failed to connect to CAN network\r\n");
+        EVT::core::log::LOGGER.log(log::Logger::LogLevel::ERROR, "Failed to connect to CAN network");
         return 1;
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Setup CAN configuration, this handles making drivers, applying settings.
+    // And generally creating the CANopen stack node which is the interface
+    // between the application (the code we write) and the physical CAN network
+    ///////////////////////////////////////////////////////////////////////////
     // Make drivers
     CO_IF_DRV canStackDriver;
 
@@ -147,7 +154,9 @@ int main() {
     CONodeStart(&canNode);
     CONmtSetMode(&canNode.Nmt, CO_OPERATIONAL);
 
-    EVT::core::log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Error: %d\n\r", CONodeGetErr(&canNode));
+    time::wait(500);
+
+    EVT::core::log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Error: %d", CONodeGetErr(&canNode));
 
     while (1) {
         precharge.handle();//update state machine
@@ -158,5 +167,7 @@ int main() {
         COTmrService(&canNode.Tmr);
         // Handle executing timer events that have elapsed
         COTmrProcess(&canNode.Tmr);
+
+        time::wait(10);// May not be necessary
     }
 }
