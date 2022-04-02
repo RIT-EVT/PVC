@@ -254,4 +254,12 @@ std::string pre_charge::stateString(State currentState) {
     return s;
 }
 
+CO_OBJ_T* pre_charge::getObjectDictionary() {
+    return objectDictionary;
+}
+
+uint16_t pre_charge::getObjectDictionarySize() {
+    return OBJECT_DICTIONARY_SIZE;
+}
+
 }// namespace pre_charge
