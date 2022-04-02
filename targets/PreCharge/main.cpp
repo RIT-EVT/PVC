@@ -4,7 +4,7 @@
 #include <EVT/io/manager.hpp>
 #include <EVT/io/pin.hpp>
 
-#include <pre-charge/pre_charge.hpp>
+#include <PreCharge/PreCharge.hpp>
 
 namespace IO = EVT::core::IO;
 
@@ -22,7 +22,7 @@ int main() {
     IO::GPIO& cont          = IO::getGPIO<IO::Pin::PA_8>(IO::GPIO::Direction::OUTPUT);
     IO::GPIO& apm           = IO::getGPIO<IO::Pin::PA_2>(IO::GPIO::Direction::OUTPUT);
     IO::GPIO& forward       = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
-    pre_charge::pre_charge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, forward);
+    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, forward);
 
     while (1) {
         precharge.handle(); //update state machine

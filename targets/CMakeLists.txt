@@ -1,2 +1,2 @@
 # Add all targets
-add_subdirectory(pre-charge)
+add_subdirectory(PreCharge)

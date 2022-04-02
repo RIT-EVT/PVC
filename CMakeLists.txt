@@ -39,7 +39,7 @@ add_library(${PROJECT_NAME} STATIC)
 
 # Add sources
 target_sources(${PROJECT_NAME} PRIVATE
-        src/pre-charge/pre_charge.cpp
+        src/PreCharge/PreCharge.cpp
         )
 
 ###############################################################################
