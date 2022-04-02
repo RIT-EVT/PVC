@@ -25,6 +25,6 @@ int main() {
     PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, forward);
 
     while (1) {
-        precharge.handle(); //update state machine
+        precharge.handle();//update state machine
     }
 }
