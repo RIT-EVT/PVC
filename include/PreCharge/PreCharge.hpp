@@ -2,17 +2,16 @@
 
 #include <string>
 
-#include <Canopen/co_core.h>
 #include <EVT/io/GPIO.hpp>
 
 namespace IO = EVT::core::IO;
 
-namespace pre_charge {
+namespace PreCharge {
 
 /**
  * Represents the pre-charge controller used for DEV1
  */
-class pre_charge {
+class PreCharge {
 public:
     /**
      * Binary representation of the states that the pre-charge controller can be in
@@ -36,13 +35,22 @@ public:
         FORWARD_DISABLE = 7u
     };
 
+    enum class PinStatus {
+        DISABLE = 0u,
+        ENABLE = 1u
+    };
+
+    static constexpr uint16_t PRECHARGE_DELAY = 5;         //TODO: make actually 5 tau
+    static constexpr uint16_t DISCHARGE_DELAY = 10;        //TODO: make actually 10 tau
+    static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
+
     /**
      * Constructor for pre-charge state machine
      * 
      */
-    pre_charge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-               IO::GPIO& apm, IO::GPIO& forward);
+    PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
+              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
+              IO::GPIO& apm, IO::GPIO& forward);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -75,35 +83,35 @@ public:
      * 
      * @param state 0 = precharge disabled, 1 = precharge enabled
      */
-    void setPrecharge(int state);
+    void setPrecharge(PinStatus state);
 
     /**
      * Set the Discharge state
      * 
      * @param state 0 = discharge disabled, 1 = discharge enabled
      */
-    void setDischarge(int state);
+    void setDischarge(PinStatus state);
 
     /**
      * Toggle the state of the Main Contactor
      * 
      * @param state 0 = contactor open, 1 = contactor closed
      */
-    void setContactor(int state);
+    void setContactor(PinStatus state);
 
     /**
      * Set the Forward state
      * 
      * @param state 0 = forward disabled, 1 = forward enabled
      */
-    void setForward(int state);
+    void setForward(PinStatus state);
 
     /**
      * Set the APM state
      * 
      * @param state 0 = APM disabled, 1 = APM enabled
      */
-    void setAPM(int state);
+    void setAPM(PinStatus state);
 
     /**
      * Handles when the MC is powered off.
@@ -162,21 +170,6 @@ public:
     void forwardDisableState();
 
     /**
-     * Pretty print the current state machine status for testing
-     * 
-     */
-    std::string printState();
-
-    /**
-     * Testing helper function to return the string value of
-     * the current state enum
-     * 
-     * @param currentState 
-     * @return std::string 
-     */
-    std::string stateString(State currentState);
-
-    /**
      * Get a pointer to the start of the CANopen object dictionary.
      *
      * @return Pointer to the start of the CANopen object dictionary.
@@ -210,13 +203,14 @@ private:
     /** GPIO instance to toggle FW_EN_CTL */
     IO::GPIO& forward;
 
-    IO::GPIO::State keyStatus;
+    IO::GPIO::State keyInStatus;
     IO::GPIO::State stoStatus;
-    IO::GPIO::State batteryOneStatus;
-    IO::GPIO::State batteryTwoStatus;
-    IO::GPIO::State eStopStatus;
+    IO::GPIO::State batteryOneOkStatus;
+    IO::GPIO::State batteryTwoOkStatus;
+    IO::GPIO::State eStopActiveStatus;
 
     State state;
+    uint64_t state_start_time;
 
     /**
      * Have to know the size of the object dictionary for initialization
@@ -333,4 +327,4 @@ private:
     };
 };
 
-}// namespace pre_charge
+}// namespace PreCharge
