@@ -1,5 +1,12 @@
 ###############################################################################
-# Top level CMakeList for building the EVT *BOARD_NAME* source code
+# Convert CMake flags to compiler flags
+###############################################################################
+if(EVT_CORE_LOG_ENABLE)
+    add_compile_definitions(EVT_CORE_LOG_ENABLE)
+endif()
+
+###############################################################################
+# Top level CMakeList for building the EVT pre-charge source code
 ###############################################################################
 cmake_minimum_required(VERSION 3.15)
 
@@ -15,7 +22,7 @@ include(${EVT_CORE_DIR}/cmake/evt-core_install.cmake)
 ###############################################################################
 # Project Setup
 ###############################################################################
-set(BOARD_LIB_NAME   EXAMPLE)
+set(BOARD_LIB_NAME   pre_charge)
 if("${BOARD_LIB_NAME}" STREQUAL CHANGE_ME)
     message(FATAL_ERROR
             "You must set the template project name in CmakeLists.txt")
@@ -32,15 +39,12 @@ add_library(${PROJECT_NAME} STATIC)
 
 # Add sources
 target_sources(${PROJECT_NAME} PRIVATE
-        src/BOARD_NAME/dev/LED.cpp
+        src/PreCharge/PreCharge.cpp
         )
 
 ###############################################################################
 # Handle dependencies
 ###############################################################################
-
-# TODO: This should be set by the user of this library
-add_compile_definitions(STM32F302x8)
 
 target_link_libraries(${PROJECT_NAME}
         PUBLIC EVT
