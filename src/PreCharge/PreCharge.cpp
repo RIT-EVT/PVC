@@ -146,9 +146,9 @@ void PreCharge::eStopState() {
 
 void PreCharge::prechargeState() {
     setPrecharge(PreCharge::PinStatus::ENABLE);
-    if((time::millis() - state_start_time) > PRECHARGE_DELAY) {
+    if ((time::millis() - state_start_time) > PRECHARGE_DELAY) {
         setPrecharge(PreCharge::PinStatus::DISABLE);
-        if(stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
+        if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
             state = State::CONT_OPEN;
         } else {
             state = State::CONT_CLOSE;
@@ -158,7 +158,7 @@ void PreCharge::prechargeState() {
 
 void PreCharge::dischargeState() {
     setDischarge(PreCharge::PinStatus::ENABLE);
-    if((time::millis() - state_start_time) > DISCHARGE_DELAY) {
+    if ((time::millis() - state_start_time) > DISCHARGE_DELAY) {
         setDischarge(PreCharge::PinStatus::DISABLE);
         state = State::MC_OFF;
     }
@@ -183,7 +183,7 @@ void PreCharge::contCloseState() {
 
 void PreCharge::forwardDisableState() {
     setForward(PreCharge::PinStatus::DISABLE);
-    if((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
+    if ((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
         setAPM(PreCharge::PinStatus::DISABLE);
         state = State::CONT_OPEN;
     }

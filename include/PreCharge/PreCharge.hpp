@@ -40,9 +40,9 @@ public:
         ENABLE = 1u
     };
 
-    static constexpr uint16_t PRECHARGE_DELAY = 5; //TODO: make actually 5 tau
-    static constexpr uint16_t DISCHARGE_DELAY = 10; //TODO: make actually 10 tau
-    static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000; // 5 seconds
+    static constexpr uint16_t PRECHARGE_DELAY = 5;         //TODO: make actually 5 tau
+    static constexpr uint16_t DISCHARGE_DELAY = 10;        //TODO: make actually 10 tau
+    static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
 
     /**
      * Constructor for pre-charge state machine
