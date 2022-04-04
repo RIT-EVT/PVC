@@ -136,7 +136,7 @@ int main() {
     canStackDriver.Nvm = &nvmDriver;
 
     CO_NODE_SPEC canSpec = {
-        .NodeId = pre_charge::pre_charge::NODE_ID,
+        .NodeId = PreCharge::PreCharge::NODE_ID,
         .Baudrate = IO::CAN::DEFAULT_BAUD,
         .Dict = precharge.getObjectDictionary(),
         .DictLen = precharge.getObjectDictionarySize(),

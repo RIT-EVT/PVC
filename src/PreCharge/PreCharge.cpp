@@ -189,4 +189,12 @@ void PreCharge::forwardDisableState() {
     }
 }
 
+CO_OBJ_T* PreCharge::getObjectDictionary() {
+    return objectDictionary;
+}
+
+uint16_t PreCharge::getObjectDictionarySize() {
+    return OBJECT_DICTIONARY_SIZE;
+}
+
 }// namespace PreCharge
