@@ -9,8 +9,8 @@
 #include <EVT/utils/log.hpp>
 #include <EVT/utils/types/FixedQueue.hpp>
 
-#include <PreCharge/PreCharge.hpp>
 #include <EVT/dev/platform/f3xx/f302x8/Timerf302x8.hpp>
+#include <PreCharge/PreCharge.hpp>
 
 namespace IO = EVT::core::IO;
 namespace DEV = EVT::core::DEV;
