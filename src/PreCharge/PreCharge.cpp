@@ -126,6 +126,7 @@ void PreCharge::mcOffState() {
         state = State::ESTOPWAIT;
     } else if(stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {
         state = State::PRECHARGE;
+        state_start_time = time::millis();
     }
     //else stay on MC_OFF
 }
@@ -133,6 +134,7 @@ void PreCharge::mcOffState() {
 void PreCharge::mcOnState() {
     if(stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
+        state_start_time = time::millis();
     }
     //else stay on MC_ON
 }
@@ -146,25 +148,28 @@ void PreCharge::eStopState() {
 
 void PreCharge::prechargeState() {
     setPrecharge(PreCharge::PinStatus::ENABLE);
-    time::wait(5);  //wait 5 tau
-    setPrecharge(PreCharge::PinStatus::DISABLE);
-    if(stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
-        state = State::CONT_OPEN;
-    } else {
-        state = State::CONT_CLOSE;
+    if((time::millis() - state_start_time) > PRECHARGE_DELAY) {
+        setPrecharge(PreCharge::PinStatus::DISABLE);
+        if(stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
+            state = State::CONT_OPEN;
+        } else {
+            state = State::CONT_CLOSE;
+        }
     }
 }
 
 void PreCharge::dischargeState() {
     setDischarge(PreCharge::PinStatus::ENABLE);
-    time::wait(10); //wait 10 tau
-    setDischarge(PreCharge::PinStatus::DISABLE);
-    state = State::MC_OFF;
+    if((time::millis() - state_start_time) > DISCHARGE_DELAY) {
+        setDischarge(PreCharge::PinStatus::DISABLE);
+        state = State::MC_OFF;
+    }
 }
 
 void PreCharge::contOpenState() {
     setContactor(PreCharge::PinStatus::DISABLE);
     state = State::DISCHARGE;
+    state_start_time = time::millis();
 }
 
 void PreCharge::contCloseState() {
@@ -180,9 +185,10 @@ void PreCharge::contCloseState() {
 
 void PreCharge::forwardDisableState() {
     setForward(PreCharge::PinStatus::DISABLE);
-    time::wait(5000);
-    setAPM(PreCharge::PinStatus::DISABLE);
-    state = State::CONT_OPEN;
+    if((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
+        setAPM(PreCharge::PinStatus::DISABLE);
+        state = State::CONT_OPEN;
+    }
 }
 
 }// namespace PreCharge
