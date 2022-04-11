@@ -97,7 +97,7 @@ int main() {
     DEV::Timerf302x8 timer(TIM2, 100);
 
     // Set up Logger
-    IO::UART& uart = IO::getUART<IO::Pin::UART_TX, IO::Pin::UART_RX>(9600);
+    IO::UART& uart = IO::getUART<IO::Pin::PB_6, IO::Pin::PB_7>(9600);
     log::LOGGER.setUART(&uart);
     log::LOGGER.setLogLevel(log::Logger::LogLevel::DEBUG);
     log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Logger initialized.");
@@ -157,6 +157,13 @@ int main() {
     time::wait(500);
 
     EVT::core::log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Error: %d", CONodeGetErr(&canNode));
+
+    // Start with everything at 0
+    apm.writePin(IO::GPIO::State::LOW);
+    forward.writePin(IO::GPIO::State::LOW);
+    pc.writePin(IO::GPIO::State::LOW);
+    dc.writePin(IO::GPIO::State::LOW);
+    cont.writePin(IO::GPIO::State::LOW);
 
     while (1) {
         precharge.handle();//update state machine

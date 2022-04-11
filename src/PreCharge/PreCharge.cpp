@@ -24,7 +24,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     stoStatus = IO::GPIO::State::LOW;
     batteryOneOkStatus = IO::GPIO::State::LOW;
     batteryTwoOkStatus = IO::GPIO::State::LOW;
-    eStopActiveStatus = IO::GPIO::State::LOW;
+    eStopActiveStatus = IO::GPIO::State::HIGH;
     //TODO: Add GFD
 }
 
@@ -68,7 +68,7 @@ void PreCharge::getSTO() {
     eStopActiveStatus = eStop.readPin();
     //TODO: Add GFD
 
-    if (batteryOneOkStatus == IO::GPIO::State::HIGH && batteryTwoOkStatus == IO::GPIO::State::HIGH && eStopActiveStatus == IO::GPIO::State::LOW) {
+    if (batteryOneOkStatus == IO::GPIO::State::HIGH && batteryTwoOkStatus == IO::GPIO::State::HIGH && eStopActiveStatus == IO::GPIO::State::HIGH) {
         stoStatus = IO::GPIO::State::HIGH;
     } else {
         stoStatus = IO::GPIO::State::LOW;
@@ -173,10 +173,10 @@ void PreCharge::contOpenState() {
 void PreCharge::contCloseState() {
     setContactor(PreCharge::PinStatus::ENABLE);
     setForward(PreCharge::PinStatus::ENABLE);
-    setAPM(PreCharge::PinStatus::ENABLE);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::CONT_OPEN;
     } else if (stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {
+        setAPM(PreCharge::PinStatus::ENABLE);
         state = State::MC_ON;
     }
 }
@@ -184,8 +184,8 @@ void PreCharge::contCloseState() {
 void PreCharge::forwardDisableState() {
     setForward(PreCharge::PinStatus::DISABLE);
     if ((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
-        setAPM(PreCharge::PinStatus::DISABLE);
         state = State::CONT_OPEN;
+        setAPM(PreCharge::PinStatus::DISABLE);
     }
 }
 
