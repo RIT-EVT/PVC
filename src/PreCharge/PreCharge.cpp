@@ -71,7 +71,13 @@ void PreCharge::getSTO() {
     if (batteryOneOkStatus == IO::GPIO::State::HIGH && batteryTwoOkStatus == IO::GPIO::State::HIGH && eStopActiveStatus == IO::GPIO::State::HIGH) {
         stoStatus = IO::GPIO::State::HIGH;
     } else {
-        stoStatus = IO::GPIO::State::LOW;
+        if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+            stoStatus = IO::GPIO::State::LOW;
+            numAttemptsMade = 0;
+            return;
+        }
+
+        numAttemptsMade++;
     }
 }
 

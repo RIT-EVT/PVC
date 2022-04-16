@@ -44,6 +44,21 @@ public:
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000; // 5 seconds
 
     /**
+     * Number of attempts that will be made to check the STO status
+     * before failing
+     */
+    static constexpr uint16_t MAX_STO_ATTEMPTS = 50;
+
+    /**
+     * Utility variable which can be used to count the number of attempts that
+     * was made to complete a certain actions.
+     *
+     * For example, this is used for checking the STO N
+     * number of times before failing
+     */
+    uint16_t numAttemptsMade;
+
+    /**
      * Constructor for pre-charge state machine
      * 
      */
