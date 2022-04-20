@@ -9,15 +9,16 @@ namespace PreCharge {
 
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                      IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-                     IO::GPIO& apm, IO::GPIO& forward) : key(key),
-                                                         batteryOne(batteryOne),
-                                                         batteryTwo(batteryTwo),
-                                                         eStop(eStop),
-                                                         pc(pc),
-                                                         dc(dc),
-                                                         cont(cont),
-                                                         apm(apm),
-                                                         forward(forward) {
+                     IO::GPIO& apm, IO::GPIO& forward, IO::CAN& can) :  key(key),
+                                                                        batteryOne(batteryOne),
+                                                                        batteryTwo(batteryTwo),
+                                                                        eStop(eStop),
+                                                                        pc(pc),
+                                                                        dc(dc),
+                                                                        cont(cont),
+                                                                        apm(apm),
+                                                                        forward(forward),
+                                                                        can(can) {
     state = State::MC_OFF;
 
     keyInStatus = IO::GPIO::State::LOW;
@@ -183,6 +184,12 @@ void PreCharge::contCloseState() {
         state = State::CONT_OPEN;
     } else if (stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {
         setAPM(PreCharge::PinStatus::ENABLE);
+
+        //CAN message to wake TMS
+        uint8_t payload[1] = {0x01};
+        IO::CANMessage TMSOpMessage(0, 1, payload, false);
+        can.transmit(TMSOpMessage);
+
         state = State::MC_ON;
     }
 }
@@ -190,8 +197,14 @@ void PreCharge::contCloseState() {
 void PreCharge::forwardDisableState() {
     setForward(PreCharge::PinStatus::DISABLE);
     if ((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
-        state = State::CONT_OPEN;
         setAPM(PreCharge::PinStatus::DISABLE);
+
+        //CAN message to send TMS into pre-op state
+        uint8_t payload[1] = {0x80};
+        IO::CANMessage TMSOpMessage(0, 1, payload, false);
+        can.transmit(TMSOpMessage);
+
+        state = State::CONT_OPEN;
     }
 }
 
