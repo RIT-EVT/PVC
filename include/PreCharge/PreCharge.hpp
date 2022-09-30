@@ -40,7 +40,17 @@ public:
         ENABLE = 1u
     };
 
-    static constexpr uint16_t PRECHARGE_DELAY =5250;        // 5.25 seconds
+    uint16_t IOStatus; //16 //keyStatus:stoStatus:batteryOneOkStatus:batteryTwoOkStatus:eStopStatus:
+                            //pcStatus:dcStatus:contStatus:apmStatus:forwardStatus
+    uint8_t  Statusword; //8
+    uint64_t InputVoltage; //16
+    uint16_t OutputVoltage; //16
+    uint16_t BasePTemp; //16
+
+    uint64_t changePDO;
+    uint64_t cyclicPDO;
+
+    static constexpr uint16_t PRECHARGE_DELAY = 5250;       // 5.25 seconds
     static constexpr uint16_t DISCHARGE_DELAY = 5250;       // 5.25 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000; // 5 seconds
 
@@ -70,7 +80,7 @@ public:
     /**
      * The node ID used to identify the device on the CAN network.
      */
-    static constexpr uint8_t NODE_ID = 0x01;
+    static constexpr uint8_t NODE_ID = 0x02;
 
     /**
      * Handler running the pre-charge state switching
@@ -198,6 +208,8 @@ public:
      */
     uint16_t getObjectDictionarySize();
 
+    void sendChangePDO();
+
 private:
     /** GPIO instance to monitor KEY_IN */
     IO::GPIO& key;
@@ -225,6 +237,11 @@ private:
     IO::GPIO::State batteryOneOkStatus;
     IO::GPIO::State batteryTwoOkStatus;
     IO::GPIO::State eStopActiveStatus;
+    IO::GPIO::State pcStatus;
+    IO::GPIO::State dcStatus;
+    IO::GPIO::State contStatus;
+    IO::GPIO::State apmStatus;
+    IO::GPIO::State forwardStatus;
 
     State state;
     uint64_t state_start_time;
@@ -233,7 +250,7 @@ private:
      * Have to know the size of the object dictionary for initialization
      * process.
      */
-    static constexpr uint8_t OBJECT_DICTIONARY_SIZE = 16;
+    static constexpr uint8_t OBJECT_DICTIONARY_SIZE = 19;
 
     /**
      * The object dictionary itself. Will be populated by this object during
@@ -317,14 +334,15 @@ private:
             .Data = (uintptr_t) 2000,
         },
 
-        // TPDO0 mapping, determins the PDO messages to send when TPDO1 is triggered
+        // TPDO0 mapping, determines the PDO messages to send when TPDO1 is triggered
         // 0: The number of PDO message associated with the TPDO
         // 1: Link to the first PDO message
         // n: Link to the nth PDO message
         {
             .Key = CO_KEY(0x1A00, 0, CO_UNSIGNED8 | CO_OBJ_D__R_),
             .Type = nullptr,
-            .Data = (uintptr_t) 1},
+            .Data = (uintptr_t) 1
+        },
         {
             .Key = CO_KEY(0x1A00, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
             .Type = nullptr,
