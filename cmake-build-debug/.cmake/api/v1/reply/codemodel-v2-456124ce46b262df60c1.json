@@ -1,0 +1,269 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						4
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-985be0d46b24ad863736.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"build" : "libs/EVT-core",
+					"childIndexes" : 
+					[
+						2,
+						3
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-libs.EVT-core-Debug-327d6e41169050a82cf1.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "libs/EVT-core",
+					"targetIndexes" : 
+					[
+						1,
+						4
+					]
+				},
+				{
+					"build" : "libs/EVT-core/libs/HALf3",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-libs.EVT-core.libs.HALf3-Debug-7e9e1c72ff84ff8a13b4.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 2,
+					"source" : "libs/EVT-core/libs/HALf3",
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"build" : "libs/EVT-core/libs/canopen/canopen",
+					"jsonFile" : "directory-libs.EVT-core.libs.canopen.canopen-Debug-13ec73c5975437bfd51f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "libs/EVT-core/libs/canopen/canopen",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "targets",
+					"childIndexes" : 
+					[
+						5,
+						6
+					],
+					"jsonFile" : "directory-targets-Debug-a2ef452da3fd44f8358e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "targets"
+				},
+				{
+					"build" : "targets/manual",
+					"jsonFile" : "directory-targets.manual-Debug-a3e3926de27bf2e6fd6b.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 3,
+					"source" : "targets/manual",
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"build" : "targets/PreCharge",
+					"jsonFile" : "directory-targets.PreCharge-Debug-7a6216f3a381d2bf3a6f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 4,
+					"source" : "targets/PreCharge",
+					"targetIndexes" : 
+					[
+						3
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						3,
+						4
+					],
+					"directoryIndexes" : 
+					[
+						0,
+						4
+					],
+					"name" : "pre_charge",
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"childIndexes" : 
+					[
+						2
+					],
+					"directoryIndexes" : 
+					[
+						1,
+						3
+					],
+					"name" : "EVT",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						4
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "HALf3",
+					"parentIndex" : 1,
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						5
+					],
+					"name" : "manual",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						6
+					],
+					"name" : "PreCharge",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 3,
+					"id" : "Canopen::@616149bc794c5bd58fab",
+					"jsonFile" : "target-Canopen-Debug-8fa9d234a81a18e3c5d5.json",
+					"name" : "Canopen",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "EVT::@485a6e76225502ead673",
+					"jsonFile" : "target-EVT-Debug-7fdc27e73ea7bf1c8432.json",
+					"name" : "EVT",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "HALf3::@e1f8d405e6a15bd41192",
+					"jsonFile" : "target-HALf3-Debug-7341fbc47b5ab288b7ce.json",
+					"name" : "HALf3",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "PreCharge::@a092134fee407a219f91",
+					"jsonFile" : "target-PreCharge-Debug-4644f55074b544657116.json",
+					"name" : "PreCharge",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "clang-format::@485a6e76225502ead673",
+					"jsonFile" : "target-clang-format-Debug-7524274104e1ee83d752.json",
+					"name" : "clang-format",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "manual::@6273ba14947555909e85",
+					"jsonFile" : "target-manual-Debug-f80d53ac2d6d4a8923e1.json",
+					"name" : "manual",
+					"projectIndex" : 3
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "pre_charge::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pre_charge-Debug-1efa6b99a6fb160932c6.json",
+					"name" : "pre_charge",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/trevo/CLionProjects/PVC/cmake-build-debug",
+		"source" : "C:/Users/trevo/CLionProjects/PVC"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}
