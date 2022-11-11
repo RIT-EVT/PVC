@@ -12,14 +12,11 @@ namespace PreCharge {
 
     MAX22530::MAX22530(IO::SPI& SPI) : spi(spi){}
 
-    uint8_t MAX22530ReadVoltage(uint8_t regAddress) {
+    uint8_t ReadVoltage() {
         uint16_t result = 0;
-        spi.startTransmission(regAddress);
+        spi.startTransmission(0);
         result = spi.read();
-        spi.endTransmission(regAddress);
+        spi.endTransmission(0);
         return result;
     }
-
-
-
 }
