@@ -35,11 +35,12 @@ project(${BOARD_LIB_NAME}
         LANGUAGES CXX C
         )
 
-add_library(${PROJECT_NAME} STATIC include/PreCharge/dev/MAX22530.h include/PreCharge/dev/MAX22530.hpp src/PreCharge/dev/MAX22530.cpp)
+add_library(${PROJECT_NAME} STATIC)
 
 # Add sources
 target_sources(${PROJECT_NAME} PRIVATE
         src/PreCharge/PreCharge.cpp
+        src/PreCharge/dev/MAX22530.cpp
         )
 
 ###############################################################################
