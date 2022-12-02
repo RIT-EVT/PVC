@@ -13,15 +13,17 @@ class MAX22530{
 public:
     /*Constructor for MAX22530 object.*/
     MAX22530(IO::SPI& SPI);
-    /* Reads the value of the selected register. */
+    /**
+     *Reads the voltage values of the device.
+     * @return uint16_t of the values read from the device which transmission was started with.
+     */
     uint8_t ReadVoltage();
 
-
-
-/******************************************************************************/
+    /******************************************************************************/
 /***	Global Variables, Declarations				       ***/
 /******************************************************************************/
 private:
     IO::SPI& spi;
+    uint8_t bytes[2];
 };
 }
