@@ -20,6 +20,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                                                                         forward(forward),
                                                                         can(can) {
     state = State::MC_OFF;
+    prevState = State::MC_OFF;
 
     keyInStatus = IO::GPIO::State::LOW;
     stoStatus = IO::GPIO::State::LOW;
@@ -37,10 +38,8 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
 void PreCharge::handle() {
     getSTO();  //update value of STO
     getMCKey();//update value of MC_KEY_IN
+    getIOStatus(); //update value of IOStatus
 
-    IOStatus = (static_cast<unsigned int>(keyInStatus) << 16 | static_cast<uint8_t>(stoStatus) << 15 | static_cast<uint8_t>(batteryOneOkStatus) << 14 |
-        static_cast<uint8_t>(batteryTwoOkStatus) << 13 | static_cast<uint8_t>(eStopActiveStatus) << 12 | static_cast<uint8_t>(pcStatus) << 11 | static_cast<uint8_t>(dcStatus) << 10 |
-        static_cast<uint8_t>(contStatus) << 9 | static_cast<uint8_t>(apmStatus) << 8 | static_cast<uint8_t>(forwardStatus) << 7);
     Statusword = static_cast<unsigned int>(state);
     InputVoltage = 0; //Does not exist yet
     OutputVoltage = 0; //Does not exist yet
@@ -102,15 +101,24 @@ void PreCharge::getMCKey() {
     keyInStatus = key.readPin();
 }
 
+void PreCharge::getIOStatus() {
+    pcStatus = pc.readPin();
+    dcStatus = dc.readPin();
+    contStatus = cont.readPin();
+    apmStatus = apm.readPin();
+    forwardStatus = forward.readPin();
+
+    IOStatus = (static_cast<unsigned int>(keyInStatus) << 16 | static_cast<uint8_t>(stoStatus) << 15 | static_cast<uint8_t>(batteryOneOkStatus) << 14 |
+    static_cast<uint8_t>(batteryTwoOkStatus) << 13 | static_cast<uint8_t>(eStopActiveStatus) << 12 | static_cast<uint8_t>(pcStatus) << 11 | static_cast<uint8_t>(dcStatus) << 10 |
+    static_cast<uint8_t>(contStatus) << 9 | static_cast<uint8_t>(apmStatus) << 8 | static_cast<uint8_t>(forwardStatus) << 7);
+}
+
 void PreCharge::setPrecharge(PreCharge::PinStatus state) {
     if (static_cast<uint8_t>(state)) {
         pc.writePin(IO::GPIO::State::HIGH);
     } else {
         pc.writePin(IO::GPIO::State::LOW);
     }
-
-    pcStatus = pc.readPin();
-    sendChangePDO();
 }
 
 void PreCharge::setDischarge(PreCharge::PinStatus state) {
@@ -119,9 +127,6 @@ void PreCharge::setDischarge(PreCharge::PinStatus state) {
     } else {
         dc.writePin(IO::GPIO::State::LOW);
     }
-
-    dcStatus = dc.readPin();
-    sendChangePDO();
 }
 
 void PreCharge::setContactor(PreCharge::PinStatus state) {
@@ -130,9 +135,6 @@ void PreCharge::setContactor(PreCharge::PinStatus state) {
     } else {
         cont.writePin(IO::GPIO::State::LOW);
     }
-
-    contStatus = cont.readPin();
-    sendChangePDO();
 }
 
 void PreCharge::setAPM(PreCharge::PinStatus state) {
@@ -141,9 +143,6 @@ void PreCharge::setAPM(PreCharge::PinStatus state) {
     } else {
         apm.writePin(IO::GPIO::State::LOW);
     }
-
-    apmStatus = apm.readPin();
-    sendChangePDO();
 }
 
 void PreCharge::setForward(PreCharge::PinStatus state) {
@@ -152,19 +151,22 @@ void PreCharge::setForward(PreCharge::PinStatus state) {
     } else {
         forward.writePin(IO::GPIO::State::LOW);
     }
-
-    forwardStatus = forward.readPin();
-    sendChangePDO();
 }
 
 void PreCharge::mcOffState() {
     if (stoStatus == IO::GPIO::State::LOW) {
         state = State::ESTOPWAIT;
-        sendChangePDO();
+        if(prevState != state) {
+            sendChangePDO();
+        }
+        prevState = state;
     } else if (stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {
         state = State::PRECHARGE;
         state_start_time = time::millis();
-        sendChangePDO();
+        if(prevState != state) {
+            sendChangePDO();
+        }
+        prevState = state;
     }
     //else stay on MC_OFF
 }
@@ -173,7 +175,10 @@ void PreCharge::mcOnState() {
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
         state_start_time = time::millis();
-        sendChangePDO();
+        if(prevState != state) {
+            sendChangePDO();
+        }
+        prevState = state;
     }
     //else stay on MC_ON
 }
@@ -181,13 +186,19 @@ void PreCharge::mcOnState() {
 void PreCharge::eStopState() {
     if (stoStatus == IO::GPIO::State::HIGH) {
         state = State::MC_OFF;
-        sendChangePDO();
+        if(prevState != state) {
+            sendChangePDO();
+        }
+        prevState = state;
     }
     //else stay on E-Stop
 }
 
 void PreCharge::prechargeState() {
     setPrecharge(PreCharge::PinStatus::ENABLE);
+    if(prevState != state) {
+        sendChangePDO();
+    }
     if ((time::millis() - state_start_time) > PRECHARGE_DELAY) {
         setPrecharge(PreCharge::PinStatus::DISABLE);
         if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
@@ -195,24 +206,31 @@ void PreCharge::prechargeState() {
         } else {
             state = State::CONT_CLOSE;
         }
-        sendChangePDO();
     }
+    prevState = state;
 }
 
 void PreCharge::dischargeState() {
     setDischarge(PreCharge::PinStatus::ENABLE);
+    if(prevState != state) {
+        sendChangePDO();
+    }
     if ((time::millis() - state_start_time) > DISCHARGE_DELAY) {
         setDischarge(PreCharge::PinStatus::DISABLE);
         state = State::MC_OFF;
         sendChangePDO();
     }
+    prevState = state;
 }
 
 void PreCharge::contOpenState() {
     setContactor(PreCharge::PinStatus::DISABLE);
     state = State::DISCHARGE;
     state_start_time = time::millis();
-    sendChangePDO();
+    if(prevState != state) {
+        sendChangePDO();
+    }
+    prevState = state;
 }
 
 void PreCharge::contCloseState() {
@@ -230,7 +248,10 @@ void PreCharge::contCloseState() {
 
         state = State::MC_ON;
     }
-    sendChangePDO();
+    if(prevState != state) {
+        sendChangePDO();
+    }
+    prevState = state;
 }
 
 void PreCharge::forwardDisableState() {
@@ -245,7 +266,10 @@ void PreCharge::forwardDisableState() {
 
         state = State::CONT_OPEN;
     }
-    sendChangePDO();
+    if(prevState != state) {
+        sendChangePDO();
+    }
+    prevState = state;
 }
 
 CO_OBJ_T* PreCharge::getObjectDictionary() {
@@ -259,7 +283,7 @@ uint16_t PreCharge::getObjectDictionarySize() {
 void PreCharge::sendChangePDO() {
     uint8_t value = (IOStatus << 8) | Statusword;
     uint8_t payload[1] = {value};
-    IO::CANMessage changePDOMessage(0, 6, payload, false);
+    IO::CANMessage changePDOMessage(0x02, 6, payload, false);
     can.transmit(changePDOMessage);
 }
 

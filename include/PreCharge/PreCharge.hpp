@@ -104,6 +104,12 @@ public:
     void getMCKey();
 
     /**
+     * Get the state of all IO instances and update IOStatus
+     * 
+     */
+    void getIOStatus();
+
+    /**
      * Set the Precharge state
      * 
      * @param state 0 = precharge disabled, 1 = precharge enabled
@@ -244,6 +250,7 @@ private:
     IO::GPIO::State forwardStatus;
 
     State state;
+    State prevState;
     uint64_t state_start_time;
 
     /**
