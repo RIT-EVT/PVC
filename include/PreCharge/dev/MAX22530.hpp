@@ -17,7 +17,7 @@ public:
      *Reads the voltage values of the device.
      * @return uint16_t of the values read from the device which transmission was started with.
      */
-    uint8_t ReadVoltage();
+    uint8_t readVoltage(uint16_t reg);
 
     /******************************************************************************/
 /***	Global Variables, Declarations				       ***/
@@ -25,5 +25,6 @@ public:
 private:
     IO::SPI& spi;
     uint8_t bytes[2];
+    uint8_t convertToVoltage(uint16_t count);
 };
 }

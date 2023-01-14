@@ -22,13 +22,19 @@ int main() {
    devices[0] = &IO::getGPIO<IO::Pin::SPI_CS>(EVT::core::IO::GPIO::Direction::OUTPUT);
    devices[0]->writePin(IO::GPIO::State::HIGH);
    // Setup SPI
+   // need to figure out pins (need windows machine for the maxim board)
+   //
    IO::SPI& spi = IO::getSPI<IO::Pin::SPI_SCK, IO::Pin::SPI_MOSI, IO::Pin::SPI_MISO>(devices, deviceCount);
    spi.configureSPI(SPI_SPEED, SPI_MODE0, SPI_MSB_FIRST);
 
    PreCharge::MAX22530 MAX = PreCharge::MAX22530(spi);
 
-   while(1){
-       uart.printf("Voltage : %d ",MAX.ReadVoltage());
-       time::wait(1000);
-   }
+   //while(1){
+   //time::wait(1000);
+       for (int i=0; i<=0x14; i++) {
+           uart.printf("%x: %d\r\n", i, MAX.readVoltage(i<<2));
+        //   time::wait(10);
+       }
+
+   //}
 }
