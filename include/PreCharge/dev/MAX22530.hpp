@@ -1,30 +1,34 @@
-/******************************************************************************/
-/* MAX22530      Programming Guide Functions                     */
-/******************************************************************************/
-
-#include <stdint.h>
+#include <cstdint>
 #include <EVT/io/SPI.hpp>
 #include <PreCharge/PreCharge.hpp>
 
-
 namespace PreCharge {
 
+/**
+ * Handles reading the voltage values & converting it to decivolts from the
+ * MAX22530.
+ */
 class MAX22530{
 public:
-    /*Constructor for MAX22530 object.*/
-    MAX22530(IO::SPI& SPI);
     /**
-     *Reads the voltage values of the device.
-     * @return uint16_t of the values read from the device which transmission was started with.
+     * Creates a new MAX22530 which will read a raw ADC voltage and convert it
+     * to decivolts.
+     * @param[in] spi
+     */
+    explicit MAX22530(IO::SPI& spi);
+
+    /**
+     * Returns the voltage in decivolts
+     *
+     * @return The conversion of the ADC value into temperature
      */
     uint8_t readVoltage(uint16_t reg);
 
-    /******************************************************************************/
-/***	Global Variables, Declarations				       ***/
-/******************************************************************************/
 private:
+    /// The SPI interface to read from
     IO::SPI& spi;
-    uint8_t bytes[2];
-    uint8_t convertToVoltage(uint16_t count);
+    /// Function that converts raw ADC values into decivolts
+    static uint8_t convertToVoltage(uint16_t count);
 };
+
 }
