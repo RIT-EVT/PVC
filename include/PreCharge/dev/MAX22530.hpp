@@ -1,6 +1,6 @@
-#include <cstdint>
 #include <EVT/io/SPI.hpp>
 #include <PreCharge/PreCharge.hpp>
+#include <cstdint>
 
 namespace PreCharge {
 
@@ -8,7 +8,7 @@ namespace PreCharge {
  * Handles reading the voltage values & converting it to decivolts from the
  * MAX22530.
  */
-class MAX22530{
+class MAX22530 {
 public:
     /**
      * Creates a new MAX22530 which will read a raw ADC voltage and convert it
@@ -31,4 +31,4 @@ private:
     static uint8_t convertToVoltage(uint16_t count);
 };
 
-}
+}// namespace PreCharge
