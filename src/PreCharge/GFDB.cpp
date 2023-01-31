@@ -37,29 +37,31 @@ public:
     }
 
     IO::CAN::CANStatus requestBatteryVoltage(uint8_t *batteryVoltage) {
-        uint8_t payload = 0xE4;
-        IO::CANMessage txMessage(GFDB_ID, 1, &payload, false);
-        IO::CANMessage rxMessage(GFDB_ID, 1, batteryVoltage, false);
-
-        IO::CAN::CANStatus result = can.transmit(txMessage);
-        if (result != IO::CAN::CANStatus::OK) return result;
-
-        IO::CAN::CANStatus result = can.receive(&rxMessage, false);
-        return result;
+        return requestData(&payload, 1, batteryVoltage, 1);
     }
 
     IO::CAN::CANStatus restartGFDB() {
-        return IO::CANMessage transmit_message(GFDB_ID, len, payload, false);
     }
 
     IO::CAN::CANStatus setMaxDesignVoltage(uint16_t *maxVoltage) {
-        return IO::CANMessage transmit_message(GFDB_ID, len, payload, false);
     }
 
 
 
 private:
     IO::CAN& can;
+
+    IO::CAN::CANStatus requestData(uint8_t *payload, size_t payloadSize, uint8_t receiveBuff, size_t receiveSize) {
+        IO::CANMessage txMessage(GFDB_ID, payloadSize, payload, false);
+        IO::CANMessage rxMessage(GFDB_ID, receiveSize, receiveBuff, false);
+
+        IO::CAN::CANStatus result = can.transmit(txMessage);
+        if (result != IO::CAN::CANStatus::OK) return result;
+
+        IO::CAN::CANStatus result = can.receive(&rxMessage, false);
+        return result;
+
+    }
 };
 
 }
