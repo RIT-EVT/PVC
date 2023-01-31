@@ -15,19 +15,27 @@ public:
 
     GFDB(IO::CAN& can);
 
-    IO::CAN::CANStatus init();
+    IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes);
 
-    IO::CAN::CANStatus requestTemp(int8_t *temperature);
+    IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes);
 
-    IO::CAN::CANStatus requestVnVp(uint8_t *voltageN, uint8_t *voltageP);
+     IO::CAN::CANStatus requestTemp(int8_t *temperature);
+
+    IO::CAN::CANStatus requestIsolationState(uint8_t *isoState);
+
+    IO::CAN::CANStatus requestIsolationResistances(uint8_t *resistances);
+
+    IO::CAN::CANStatus requestIsolationCapacitances(uint8_t *capacitances);
+
+    IO::CAN::CANStatus requestVpVn(uint8_t *voltageP, uint8_t *voltageN);
 
     IO::CAN::CANStatus requestBatteryVoltage(uint8_t *batteryVoltage);
+
+    IO::CAN::CANStatus requestErrorFlags(uint8_t *errorFlags);
 
     IO::CAN::CANStatus restartGFDB();
 
     IO::CAN::CANStatus setMaxDesignVoltage(uint16_t *maxVoltage);
-
-
 
 private:
     IO::CAN& can;

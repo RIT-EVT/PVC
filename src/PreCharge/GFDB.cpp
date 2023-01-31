@@ -15,11 +15,11 @@ public:
         return can->connect;
     }
 
-    IO::CAN::CANStatus requestVnHighRes(int8_t *highRes) {
+    IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes) {
         return requestData(0x60, 1, highRes, 1);
     }
 
-    IO::CAN::CANStatus requestVnHighRes(int8_t *highRes) {
+    IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes) {
         return requestData(0x61, 1, highRes, 1);
     }
 
@@ -27,7 +27,7 @@ public:
         return requestData(0x80, 1, temperature, 1);
     }
 
-    IO::CAN::CANStatus requestIsolationState(int8_t *isoState) {
+    IO::CAN::CANStatus requestIsolationState(uint8_t *isoState) {
         return requestData(0xE0, 1, isoState, 1);
     }
 
