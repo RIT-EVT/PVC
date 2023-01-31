@@ -19,7 +19,7 @@ public:
 
     IO::CAN::CANStatus requestVpHighRes(uint8_t *highRes);
 
-     IO::CAN::CANStatus requestTemp(int8_t *temperature);
+     IO::CAN::CANStatus requestTemp(int32_t *temperature);
 
     IO::CAN::CANStatus requestIsolationState(uint8_t *isoState);
 

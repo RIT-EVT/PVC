@@ -21,8 +21,14 @@ public:
         return requestData(0x61, 1, highRes, 1);
     }
 
-     IO::CAN::CANStatus requestTemp(int8_t *temperature) {
-        return requestData(0x80, 1, temperature, 1);
+     IO::CAN::CANStatus requestTemp(int32_t *temperature) {
+        uint8_t tempBuffer[4] = {};
+
+        IO::CAN::CANStatus result = requestData(0x80, 1, tempBuffer, 4);
+        if (result != IO::CAN::CANStatus::OK) return result;
+
+        *temperature = (tempBuffer[0] << 24) | (tempBuffer[1] << 16) | (tempBuffer[2] << 8) | tempBuffer[3];
+        return IO::CAN::CANStatus::OK;
     }
 
     IO::CAN::CANStatus requestIsolationState(uint8_t *isoState) {
