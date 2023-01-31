@@ -19,6 +19,21 @@ public:
     }
 
     IO::CAN::CANStatus requestVnVp(uint16_t *voltageN, uint16_t *voltageP) {
+        uint8_t payload = 0xE3;
+        uint8_t rxBuffer[2] = {};
+        IO::CANMessage txMessage(GFDB_ID, 1, &payload, false);
+        IO::CANMessage rxMessage(GFDB_ID, 2, rxBuffer, false);
+
+        IO::CAN::CANStatus result = can.transmit(txMessage);
+        if (result != IO::CAN::CANStatus::OK) return result;
+
+        IO::CAN::CANStatus result = can.receive(&rxMessage, false);
+        if (result != IO::CAN::CANStatus::OK) return result;
+
+        *voltageN = rxBuffer[0];
+        *voltageP = rxBuffer[1];
+
+        return result;
     }
 
     IO::CAN::CANStatus requestBatteryVoltage(uint8_t *batteryVoltage) {

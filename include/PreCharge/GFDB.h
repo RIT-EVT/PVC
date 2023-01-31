@@ -19,7 +19,7 @@ public:
 
     IO::CAN::CANStatus requestTemp(int8_t *temperature);
 
-    IO::CAN::CANStatus requestVnVp(uint16_t *voltageN, uint16_t *voltageP);
+    IO::CAN::CANStatus requestVnVp(uint8_t *voltageN, uint8_t *voltageP);
 
     IO::CAN::CANStatus requestBatteryVoltage(uint8_t *batteryVoltage);
 
