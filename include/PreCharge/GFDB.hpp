@@ -35,13 +35,16 @@ public:
 
     IO::CAN::CANStatus restartGFDB();
 
-    IO::CAN::CANStatus setMaxDesignVoltage(uint16_t *maxVoltage);
+    IO::CAN::CANStatus turnExcitationPulseOff(uint16_t *maxVoltage);
+
+    IO::CAN::CANStatus setMaxBatteryVoltage(uint16_t *maxVoltage);
 
 private:
     IO::CAN& can;
 
-    IO::CAN::CANStatus requestData(uint8_t command, size_t payloadSize, uint8_t receiveBuff, size_t receiveSize);
+    IO::CAN::CANStatus requestData(uint8_t command, uint8_t receiveBuff, size_t receiveSize);
 
+    IO::CAN::CANStatus sendCommand(uint8_t command, uint8_t payload, size_t payloadSize);
 };
 
 }
