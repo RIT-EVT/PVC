@@ -55,8 +55,14 @@ public:
         return result;
     }
 
-    IO::CAN::CANStatus requestBatteryVoltage(uint8_t *batteryVoltage) {
-        return requestData(0xE4, 1, batteryVoltage, 1);
+    IO::CAN::CANStatus requestBatteryVoltage(uint16_t *batteryVoltage) {
+        uint8_t rxBuffer[8] = {};
+        IO::CAN::CANStatus result = requestData(0xE4, 1, rxBuffer, 8);
+        if (result != IO::CAN::CANStatus::OK) return result;
+
+        *batteryVoltage = rxBuffer[2] << 8 | rxBuffer[3];
+
+        return result;
     }
 
     IO::CAN::CANStatus requestErrorFlags(uint8_t *errorFlags) {
