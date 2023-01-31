@@ -13,12 +13,22 @@ public:
         return can->connect;
     }
 
-    IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes) {
-        return requestData(0x60, 1, highRes, 1);
+    IO::CAN::CANStatus requestVnHighRes(int32_t *highRes) {
+        uint8_t rxBuffer[8] = {}
+        IO::CAN::CANStatus result =  requestData(0x60, 1, rxBuffer, 8);
+        if (result != IO::CAN::CANStatus::OK) return result;
+
+        *highRes = (rxBuffer[0] << 24) | (rxBuffer[1] << 16) | (rxBuffer[2] << 8) | rxBuffer[3];
+        return IO::CAN::CANStatus::OK;
     }
 
     IO::CAN::CANStatus requestVpHighRes(uint8_t *highRes) {
-        return requestData(0x61, 1, highRes, 1);
+        uint8_t rxBuffer[8] = {}
+        IO::CAN::CANStatus result =  requestData(0x61, 1, rxBuffer, 8);
+        if (result != IO::CAN::CANStatus::OK) return result;
+
+        *highRes = (rxBuffer[0] << 24) | (rxBuffer[1] << 16) | (rxBuffer[2] << 8) | rxBuffer[3];
+        return IO::CAN::CANStatus::OK;
     }
 
      IO::CAN::CANStatus requestTemp(int32_t *temperature) {
@@ -52,7 +62,7 @@ public:
         *voltageP = rxBuffer[2] << 8 | rxBuffer[3];
         *voltageN = rxBuffer[5] << 8 | rxBuffer[6];
 
-        return result;
+        return IO::CAN::CANStatus::OK;
     }
 
     IO::CAN::CANStatus requestBatteryVoltage(uint16_t *batteryVoltage) {
@@ -62,7 +72,7 @@ public:
 
         *batteryVoltage = rxBuffer[2] << 8 | rxBuffer[3];
 
-        return result;
+        return IO::CAN::CANStatus::OK;
     }
 
     IO::CAN::CANStatus requestErrorFlags(uint8_t *errorFlags) {
