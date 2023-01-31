@@ -1,6 +1,4 @@
-#ifndef PVC_GFDB_H
-#define PVC_GFDB_H
-
+#include <PreCharge/GFDB.cpp>
 namespace IO = EVT::core::IO;
 
 namespace GFDB {
@@ -19,7 +17,7 @@ public:
         return requestData(0x60, 1, highRes, 1);
     }
 
-    IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes) {
+    IO::CAN::CANStatus requestVpHighRes(uint8_t *highRes) {
         return requestData(0x61, 1, highRes, 1);
     }
 
@@ -89,4 +87,3 @@ private:
 
 }
 
-#endif//PVC_GFDB_H

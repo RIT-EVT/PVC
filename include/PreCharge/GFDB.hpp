@@ -11,13 +11,13 @@ namespace GFDB {
 
 class GFDB {
 public:
-    const GFDB_ID = 0xA100101;
+    const uint32_t GFDB_ID = 0xA100101;
 
     GFDB(IO::CAN& can);
 
     IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes);
 
-    IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes);
+    IO::CAN::CANStatus requestVpHighRes(uint8_t *highRes);
 
      IO::CAN::CANStatus requestTemp(int8_t *temperature);
 
@@ -40,9 +40,8 @@ public:
 private:
     IO::CAN& can;
 
-    IO::CAN::CANStatus transmitMessage(uint8_t *payload, size_t len);
+    IO::CAN::CANStatus requestData(uint8_t command, size_t payloadSize, uint8_t receiveBuff, size_t receiveSize);
 
-    IO::CAN::CANStatus receiveMessage(uint8_t *payload, size_t len);
 };
 
 }

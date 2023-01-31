@@ -11,6 +11,7 @@
 
 #include <EVT/dev/platform/f3xx/f302x8/Timerf302x8.hpp>
 #include <PreCharge/PreCharge.hpp>
+#include <PreCharge/GFDB.hpp>
 
 namespace IO = EVT::core::IO;
 namespace DEV = EVT::core::DEV;
