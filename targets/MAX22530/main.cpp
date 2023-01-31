@@ -1,5 +1,5 @@
 /**
- * This example prints out voltage reading from the MAX22530 ADC converter
+ * This example prints out voltage reading from the MAX22530 ADC
  */
 
 #include <EVT/io/UART.hpp>
@@ -31,7 +31,6 @@ int main() {
 
    while (1) {
        for (int reg = 0x01; reg <= 0x04; reg++) {
-           uart.printf("Register 0x%x: %d\r\n", reg, MAX.readVoltage(reg << 2));
        }
    }
 }
