@@ -21,7 +21,7 @@ public:
 
     IO::CAN::CANStatus requestVnVp(uint16_t *voltageN, uint16_t *voltageP);
 
-    IO::CAN::CANStatus requestBatteryVoltage(uint16_t *batteryVoltage);
+    IO::CAN::CANStatus requestBatteryVoltage(uint8_t *batteryVoltage);
 
     IO::CAN::CANStatus restartGFDB();
 
