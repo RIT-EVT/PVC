@@ -27,10 +27,11 @@ int main() {
    IO::SPI& spi = IO::getSPI<IO::Pin::SPI_SCK, IO::Pin::SPI_MOSI, IO::Pin::SPI_MISO>(devices, deviceCount);
    spi.configureSPI(SPI_SPEED, SPI_MODE0, SPI_MSB_FIRST);
 
-   PreCharge::MAX22530 MAX(spi);
+    PreCharge::MAX22530 MAX(spi);
 
    while (1) {
        for (int reg = 0x01; reg <= 0x04; reg++) {
+           uart.printf("Register 0x%x: %d\r\n", reg, MAX.readVoltage(reg));
        }
    }
 }

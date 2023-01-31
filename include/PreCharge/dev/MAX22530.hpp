@@ -1,6 +1,6 @@
-#include <cstdint>
 #include <EVT/io/SPI.hpp>
 #include <PreCharge/PreCharge.hpp>
+#include <cstdint>
 
 namespace PreCharge {
 

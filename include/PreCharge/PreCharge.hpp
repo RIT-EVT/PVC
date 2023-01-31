@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Canopen/co_core.h>
-#include <EVT/io/GPIO.hpp>
 #include <EVT/io/CAN.hpp>
+#include <EVT/io/GPIO.hpp>
 
 namespace IO = EVT::core::IO;
 
@@ -40,19 +40,19 @@ public:
         ENABLE = 1u
     };
 
-    uint16_t IOStatus; //16 //keyStatus:stoStatus:batteryOneOkStatus:batteryTwoOkStatus:eStopStatus:
-                            //pcStatus:dcStatus:contStatus:apmStatus:forwardStatus
-    uint8_t  Statusword; //8
+    uint16_t IOStatus;     //16 //keyStatus:stoStatus:batteryOneOkStatus:batteryTwoOkStatus:eStopStatus:
+                           //pcStatus:dcStatus:contStatus:apmStatus:forwardStatus
+    uint8_t Statusword;    //8
     uint64_t InputVoltage; //16
-    uint16_t OutputVoltage; //16
-    uint16_t BasePTemp; //16
+    uint16_t OutputVoltage;//16
+    uint16_t BasePTemp;    //16
 
     uint64_t changePDO;
     uint64_t cyclicPDO;
 
-    static constexpr uint16_t PRECHARGE_DELAY = 5250;       // 5.25 seconds
-    static constexpr uint16_t DISCHARGE_DELAY = 5250;       // 5.25 seconds
-    static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000; // 5 seconds
+    static constexpr uint16_t PRECHARGE_DELAY = 5250;      // 5.25 seconds
+    static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
+    static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
 
     /**
      * Number of attempts that will be made to check the STO status
@@ -229,7 +229,7 @@ private:
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
     IO::GPIO& forward;
-    
+
     IO::CAN& can;
 
     IO::GPIO::State keyInStatus;
@@ -341,8 +341,7 @@ private:
         {
             .Key = CO_KEY(0x1A00, 0, CO_UNSIGNED8 | CO_OBJ_D__R_),
             .Type = nullptr,
-            .Data = (uintptr_t) 1
-        },
+            .Data = (uintptr_t) 1},
         {
             .Key = CO_KEY(0x1A00, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
             .Type = nullptr,
