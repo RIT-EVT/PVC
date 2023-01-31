@@ -32,25 +32,25 @@ public:
     }
 
     IO::CAN::CANStatus requestIsolationState(uint8_t *isoState) {
-        return requestData(0xE0, 1, isoState, 1);
+        return requestData(0xE0, 1, isoState, 8);
     }
 
     IO::CAN::CANStatus requestIsolationResistances(uint8_t *resistances) {
-        return requestData(0xE1, 1, resistances, 1);
+        return requestData(0xE1, 1, resistances, 8);
     }
 
     IO::CAN::CANStatus requestIsolationCapacitances(uint8_t *capacitances) {
-        return requestData(0xE2, 1, capacitances, 1);
+        return requestData(0xE2, 1, capacitances, 8);
     }
 
-    IO::CAN::CANStatus requestVpVn(uint8_t *voltageP, uint8_t *voltageN) {
-        uint8_t rxBuffer[2] = {};
+    IO::CAN::CANStatus requestVpVn(uint16_t *voltageP, uint16_t *voltageN) {
+        uint8_t rxBuffer[8] = {};
 
-        IO::CAN::CANStatus result = requestData(0xE3, 1, rxBuffer, 2);
+        IO::CAN::CANStatus result = requestData(0xE3, 1, rxBuffer, 8);
         if (result != IO::CAN::CANStatus::OK) return result;
 
-        *voltageP = rxBuffer[0];
-        *voltageN = rxBuffer[1];
+        *voltageP = rxBuffer[2] << 8 | rxBuffer[3];
+        *voltageN = rxBuffer[5] << 8 | rxBuffer[6];
 
         return result;
     }
