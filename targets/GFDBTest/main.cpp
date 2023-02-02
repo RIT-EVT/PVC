@@ -32,18 +32,19 @@ int main() {
     IO::UART& uart = IO::getUART<IO::Pin::UART_TX, IO::Pin::UART_RX>(9600);
     can.addIRQHandler(canIRQHandler, &uart);
 
-    uart.printf("Starting CAN testing\r\n");
+    uart.printf("Starting GFDB tests\r\n");
     GFDB::GFDB gfdb(can);
-    IO::CAN::CANStatus result = gfdb.init();
 
     // Attempt to join the CAN network
-
-    if (result != IO::CAN::CANStatus::OK) {
+    if (gfdb.init() != IO::CAN::CANStatus::OK) {
         uart.printf("Failed to connect to the CAN network\r\n");
         return 1;
     }
 
     while (true) {
+
+
+
 
         time::wait(1000);
     }

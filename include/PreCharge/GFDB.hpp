@@ -5,6 +5,9 @@
 #ifndef PVC_GFDB_H
 #define PVC_GFDB_H
 
+#include <EVT/io/CAN.hpp>
+#include <stddef.h>
+
 namespace IO = EVT::core::IO;
 
 namespace GFDB {
@@ -17,10 +20,9 @@ public:
 
     IO::CAN::CANStatus init();
 
+    IO::CAN::CANStatus requestVnHighRes(int32_t *highRes);
 
-    IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes);
-
-    IO::CAN::CANStatus requestVpHighRes(uint8_t *highRes);
+    IO::CAN::CANStatus requestVpHighRes(int32_t *highRes);
 
      IO::CAN::CANStatus requestTemp(int32_t *temperature);
 
@@ -45,9 +47,9 @@ public:
 private:
     IO::CAN& can;
 
-    IO::CAN::CANStatus requestData(uint8_t command, uint8_t receiveBuff, size_t receiveSize);
+    IO::CAN::CANStatus requestData(uint8_t command, uint8_t *receiveBuff, size_t receiveSize);
 
-    IO::CAN::CANStatus sendCommand(uint8_t command, uint8_t payload, size_t payloadSize);
+    IO::CAN::CANStatus sendCommand(uint8_t command, uint8_t *payload, size_t payloadSize);
 };
 
 }
