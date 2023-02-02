@@ -15,6 +15,9 @@ public:
 
     GFDB(IO::CAN& can);
 
+    IO::CAN::CANStatus init();
+
+
     IO::CAN::CANStatus requestVnHighRes(uint8_t *highRes);
 
     IO::CAN::CANStatus requestVpHighRes(uint8_t *highRes);
