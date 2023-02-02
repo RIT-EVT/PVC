@@ -32,9 +32,9 @@ public:
 
     IO::CAN::CANStatus requestIsolationCapacitances(uint8_t *capacitances);
 
-    IO::CAN::CANStatus requestVpVn(uint8_t *voltageP, uint8_t *voltageN);
+    IO::CAN::CANStatus requestVpVn(uint16_t *voltageP, uint16_t *voltageN);
 
-    IO::CAN::CANStatus requestBatteryVoltage(uint8_t *batteryVoltage);
+    IO::CAN::CANStatus requestBatteryVoltage(uint16_t *batteryVoltage);
 
     IO::CAN::CANStatus requestErrorFlags(uint8_t *errorFlags);
 

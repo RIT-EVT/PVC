@@ -74,7 +74,7 @@ namespace GFDB {
     }
 
     IO::CAN::CANStatus GFDB::requestErrorFlags(uint8_t* errorFlags) {
-        return requestData(0xE5, 1, errorFlags, 1);
+        return requestData(0xE5, errorFlags, 1);
     }
 
     IO::CAN::CANStatus GFDB::restartGFDB() {
@@ -90,9 +90,10 @@ namespace GFDB {
     }
 
     IO::CAN::CANStatus GFDB::setMaxBatteryVoltage(uint16_t* maxVoltage){
-        uint8_t payload[2] = {*maxVoltage >> 8, *maxVoltage & 0xFF}};
+        uint8_t payload[2] = {*maxVoltage >> 8, *maxVoltage & 0xFF};
 
-    return sendCommand(0x62, payload, 4);
+        return sendCommand(0x62, payload, 4);
+    }
 
     IO::CAN::CANStatus GFDB::requestData(uint8_t command, uint8_t *receiveBuff, size_t receiveSize) {
         IO::CANMessage txMessage(GFDB_ID, 1, &command, false);
@@ -102,7 +103,7 @@ namespace GFDB {
         if (result != IO::CAN::CANStatus::OK)
             return result;
 
-        IO::CAN::CANStatus result = can.receive(&rxMessage, false);
+        result = can.receive(&rxMessage, false);
         return result;
     }
 
