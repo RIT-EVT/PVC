@@ -7,7 +7,7 @@ namespace PreCharge {
 /**
  * Handles reading voltage data from the MAX22530 ADC
  */
-class MAX22530{
+class MAX22530 {
 public:
     /**
      * Creates a new MAX22530 which will read a raw ADC voltage and convert it
@@ -31,4 +31,4 @@ private:
     static uint8_t convertToVoltage(uint16_t count);
 };
 
-}
+}// namespace PreCharge
