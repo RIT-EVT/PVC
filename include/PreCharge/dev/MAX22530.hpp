@@ -13,7 +13,7 @@ public:
      * Creates a new MAX22530 which will read a raw ADC voltage and convert it
      * to decivolts.
      *
-     * @param[in] spi
+     * @param[in] spi The SPI to use to communicate with the MAX22530
      */
     explicit MAX22530(IO::SPI& spi);
 
