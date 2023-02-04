@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Canopen/co_core.h>
+#include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
 
 namespace IO = EVT::core::IO;
@@ -39,9 +40,34 @@ public:
         ENABLE = 1u
     };
 
-    static constexpr uint16_t PRECHARGE_DELAY = 5;         //TODO: make actually 5 tau
-    static constexpr uint16_t DISCHARGE_DELAY = 10;        //TODO: make actually 10 tau
+    uint16_t IOStatus;     //16 //keyStatus:stoStatus:batteryOneOkStatus:batteryTwoOkStatus:eStopStatus:
+                           //pcStatus:dcStatus:contStatus:apmStatus:forwardStatus
+    uint8_t Statusword;    //8
+    uint64_t InputVoltage; //16
+    uint16_t OutputVoltage;//16
+    uint16_t BasePTemp;    //16
+
+    uint64_t changePDO;
+    uint64_t cyclicPDO;
+
+    static constexpr uint16_t PRECHARGE_DELAY = 5250;      // 5.25 seconds
+    static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
+
+    /**
+     * Number of attempts that will be made to check the STO status
+     * before failing
+     */
+    static constexpr uint16_t MAX_STO_ATTEMPTS = 50;
+
+    /**
+     * Utility variable which can be used to count the number of attempts that
+     * was made to complete a certain actions.
+     *
+     * For example, this is used for checking the STO N
+     * number of times before failing
+     */
+    uint16_t numAttemptsMade;
 
     /**
      * Constructor for pre-charge state machine
@@ -49,12 +75,12 @@ public:
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-              IO::GPIO& apm, IO::GPIO& forward);
+              IO::GPIO& apm, IO::GPIO& forward, IO::CAN& can);
 
     /**
      * The node ID used to identify the device on the CAN network.
      */
-    static constexpr uint8_t NODE_ID = 0x01;
+    static constexpr uint8_t NODE_ID = 0x02;
 
     /**
      * Handler running the pre-charge state switching
@@ -182,6 +208,8 @@ public:
      */
     uint16_t getObjectDictionarySize();
 
+    void sendChangePDO();
+
 private:
     /** GPIO instance to monitor KEY_IN */
     IO::GPIO& key;
@@ -202,11 +230,18 @@ private:
     /** GPIO instance to toggle FW_EN_CTL */
     IO::GPIO& forward;
 
+    IO::CAN& can;
+
     IO::GPIO::State keyInStatus;
     IO::GPIO::State stoStatus;
     IO::GPIO::State batteryOneOkStatus;
     IO::GPIO::State batteryTwoOkStatus;
     IO::GPIO::State eStopActiveStatus;
+    IO::GPIO::State pcStatus;
+    IO::GPIO::State dcStatus;
+    IO::GPIO::State contStatus;
+    IO::GPIO::State apmStatus;
+    IO::GPIO::State forwardStatus;
 
     State state;
     uint64_t state_start_time;
@@ -215,7 +250,7 @@ private:
      * Have to know the size of the object dictionary for initialization
      * process.
      */
-    static constexpr uint8_t OBJECT_DICTIONARY_SIZE = 16;
+    static constexpr uint8_t OBJECT_DICTIONARY_SIZE = 19;
 
     /**
      * The object dictionary itself. Will be populated by this object during
@@ -299,7 +334,7 @@ private:
             .Data = (uintptr_t) 2000,
         },
 
-        // TPDO0 mapping, determins the PDO messages to send when TPDO1 is triggered
+        // TPDO0 mapping, determines the PDO messages to send when TPDO1 is triggered
         // 0: The number of PDO message associated with the TPDO
         // 1: Link to the first PDO message
         // n: Link to the nth PDO message
