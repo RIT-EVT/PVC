@@ -1,6 +1,8 @@
 #include <PreCharge/GFDB.hpp>
 
+
 namespace IO = EVT::core::IO;
+namespace time = EVT::core::time;
 
 namespace GFDB {
 
@@ -65,8 +67,9 @@ namespace GFDB {
     IO::CAN::CANStatus GFDB::requestBatteryVoltage(uint16_t* batteryVoltage) {
         uint8_t rxBuffer[8] = {};
         IO::CAN::CANStatus result = requestData(0xE4, rxBuffer, 8);
-        if (result != IO::CAN::CANStatus::OK)
+        if (result != IO::CAN::CANStatus::OK) {
             return result;
+        }
 
         *batteryVoltage = rxBuffer[2] << 8 | rxBuffer[3];
 
@@ -100,10 +103,9 @@ namespace GFDB {
         IO::CANMessage rxMessage(GFDB_ID, receiveSize, receiveBuff, false);
 
         IO::CAN::CANStatus result = can.transmit(txMessage);
-        if (result != IO::CAN::CANStatus::OK)
-            return result;
-
-        result = can.receive(&rxMessage, false);
+        if (result != IO::CAN::CANStatus::OK) return result;
+        time::wait(500);
+        result = can.receive(&rxMessage);
         return result;
     }
 

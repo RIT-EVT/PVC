@@ -6,6 +6,7 @@
 #define PVC_GFDB_H
 
 #include <EVT/io/CAN.hpp>
+#include <EVT/utils/time.hpp>
 #include <stddef.h>
 
 namespace IO = EVT::core::IO;
