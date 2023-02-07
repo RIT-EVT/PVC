@@ -27,11 +27,11 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     batteryOneOkStatus = IO::GPIO::State::LOW;
     batteryTwoOkStatus = IO::GPIO::State::LOW;
     eStopActiveStatus = IO::GPIO::State::HIGH;
+    forwardStatus = IO::GPIO::State::LOW;
     pcStatus = IO::GPIO::State::LOW;
     dcStatus = IO::GPIO::State::LOW;
     contStatus = IO::GPIO::State::LOW;
     apmStatus = IO::GPIO::State::LOW;
-    forwardStatus = IO::GPIO::State::LOW;
     //TODO: Add GFD
 }
 
@@ -40,12 +40,11 @@ void PreCharge::handle() {
     getMCKey();//update value of MC_KEY_IN
     getIOStatus(); //update value of IOStatus
 
-    Statusword = static_cast<unsigned int>(state);
+    Statusword = static_cast<uint8_t>(state);
     InputVoltage = 0; //Does not exist yet
     OutputVoltage = 0; //Does not exist yet
     BasePTemp = 0; //Does not exist yet
-
-    changePDO = (IOStatus << 8) | Statusword;
+    
     cyclicPDO = (InputVoltage << 32) | (OutputVoltage << 16) | BasePTemp;
 
     switch (state) {
@@ -107,10 +106,6 @@ void PreCharge::getIOStatus() {
     contStatus = cont.readPin();
     apmStatus = apm.readPin();
     forwardStatus = forward.readPin();
-
-    IOStatus = (static_cast<unsigned int>(keyInStatus) << 16 | static_cast<uint8_t>(stoStatus) << 15 | static_cast<uint8_t>(batteryOneOkStatus) << 14 |
-    static_cast<uint8_t>(batteryTwoOkStatus) << 13 | static_cast<uint8_t>(eStopActiveStatus) << 12 | static_cast<uint8_t>(pcStatus) << 11 | static_cast<uint8_t>(dcStatus) << 10 |
-    static_cast<uint8_t>(contStatus) << 9 | static_cast<uint8_t>(apmStatus) << 8 | static_cast<uint8_t>(forwardStatus) << 7);
 }
 
 void PreCharge::setPrecharge(PreCharge::PinStatus state) {
@@ -281,9 +276,12 @@ uint16_t PreCharge::getObjectDictionarySize() {
 }
 
 void PreCharge::sendChangePDO() {
-    uint8_t value = (IOStatus << 8) | Statusword;
-    uint8_t payload[1] = {value};
-    IO::CANMessage changePDOMessage(0x02, 6, payload, false);
+    uint8_t payload[] = {Statusword, 0x00, static_cast<unsigned short>(keyInStatus) << 4 | static_cast<unsigned short>(stoStatus),
+                                           static_cast<unsigned short>(batteryOneOkStatus) << 4  | static_cast<unsigned short>(batteryTwoOkStatus),
+                                           static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(forwardStatus),
+                                           static_cast<unsigned short>(pcStatus) << 4 | static_cast<unsigned short>(dcStatus),
+                                           static_cast<unsigned short>(contStatus) << 4 | static_cast<unsigned short>(apmStatus)};
+    IO::CANMessage changePDOMessage(0x180A, 7, &payload[0], false);
     can.transmit(changePDOMessage);
 }
 

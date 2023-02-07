@@ -40,8 +40,6 @@ public:
         ENABLE = 1u
     };
 
-    uint16_t IOStatus; //16 //keyStatus:stoStatus:batteryOneOkStatus:batteryTwoOkStatus:eStopStatus:
-                            //pcStatus:dcStatus:contStatus:apmStatus:forwardStatus
     uint8_t  Statusword; //8
     uint64_t InputVoltage; //16
     uint16_t OutputVoltage; //16
