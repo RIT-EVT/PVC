@@ -15,7 +15,7 @@ namespace GFDB {
     IO::CAN::CANStatus GFDB::requestVnHighRes(int32_t* highRes) {
         uint8_t rxBuffer[8] = {};
         IO::CAN::CANStatus result = requestData(0x60, rxBuffer, 8);
-        if (result != IO::CAN::CANStatus::OK) return result;
+        if (result == IO::CAN::CANStatus::ERROR) return result;
 
         *highRes = (rxBuffer[0] << 24) | (rxBuffer[1] << 16) | (rxBuffer[2] << 8) | rxBuffer[3];
         return IO::CAN::CANStatus::OK;
@@ -24,7 +24,7 @@ namespace GFDB {
     IO::CAN::CANStatus GFDB::requestVpHighRes(int32_t* highRes) {
         uint8_t rxBuffer[8] = {};
         IO::CAN::CANStatus result = requestData(0x61, rxBuffer, 8);
-        if (result != IO::CAN::CANStatus::OK) return result;
+        if (result == IO::CAN::CANStatus::ERROR) return result;
 
         *highRes = (rxBuffer[0] << 24) | (rxBuffer[1] << 16) | (rxBuffer[2] << 8) | rxBuffer[3];
         return IO::CAN::CANStatus::OK;
@@ -34,7 +34,7 @@ namespace GFDB {
         uint8_t tempBuffer[4] = {};
 
         IO::CAN::CANStatus result = requestData(0x80, tempBuffer, 4);
-        if (result != IO::CAN::CANStatus::OK) return result;
+        if (result == IO::CAN::CANStatus::ERROR) return result;
 
         *temperature = (tempBuffer[0] << 24) | (tempBuffer[1] << 16) | (tempBuffer[2] << 8) | tempBuffer[3];
         return IO::CAN::CANStatus::OK;
@@ -56,7 +56,7 @@ namespace GFDB {
         uint8_t rxBuffer[8] = {};
 
         IO::CAN::CANStatus result = requestData(0xE3, rxBuffer, 8);
-        if (result != IO::CAN::CANStatus::OK) return result;
+        if (result == IO::CAN::CANStatus::ERROR) return result;
 
         *voltageP = rxBuffer[2] << 8 | rxBuffer[3];
         *voltageN = rxBuffer[5] << 8 | rxBuffer[6];
@@ -67,7 +67,7 @@ namespace GFDB {
     IO::CAN::CANStatus GFDB::requestBatteryVoltage(uint16_t* batteryVoltage) {
         uint8_t rxBuffer[8] = {};
         IO::CAN::CANStatus result = requestData(0xE4, rxBuffer, 8);
-        if (result != IO::CAN::CANStatus::OK) {
+        if (result == IO::CAN::CANStatus::ERROR) {
             return result;
         }
 
@@ -103,9 +103,11 @@ namespace GFDB {
         IO::CANMessage rxMessage(GFDB_ID, receiveSize, receiveBuff, true);
 
         IO::CAN::CANStatus result = can.transmit(txMessage);
-        if (result != IO::CAN::CANStatus::OK) return result;
-        time::wait(500);
+        if (result == IO::CAN::CANStatus::ERROR) return result;
+
         result = can.receive(&rxMessage, false);
+        time::wait(500); // Wait for data to be received due to interrupt
+
         return result;
     }
 
