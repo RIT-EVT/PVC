@@ -99,18 +99,18 @@ namespace GFDB {
     }
 
     IO::CAN::CANStatus GFDB::requestData(uint8_t command, uint8_t *receiveBuff, size_t receiveSize) {
-        IO::CANMessage txMessage(GFDB_ID, 1, &command, false);
-        IO::CANMessage rxMessage(GFDB_ID, receiveSize, receiveBuff, false);
+        IO::CANMessage txMessage(GFDB_ID, 1, &command, true);
+        IO::CANMessage rxMessage(GFDB_ID, receiveSize, receiveBuff, true);
 
         IO::CAN::CANStatus result = can.transmit(txMessage);
         if (result != IO::CAN::CANStatus::OK) return result;
         time::wait(500);
-        result = can.receive(&rxMessage);
+        result = can.receive(&rxMessage, false);
         return result;
     }
 
     IO::CAN::CANStatus GFDB::sendCommand(uint8_t command, uint8_t *payload, size_t payloadSize) {
-        IO::CANMessage txMessage(GFDB_ID, payloadSize, &command, false);
+        IO::CANMessage txMessage(GFDB_ID, payloadSize, &command, true);
         return can.transmit(txMessage);
     }
 }; // namespace GFDB

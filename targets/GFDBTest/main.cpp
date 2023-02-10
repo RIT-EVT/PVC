@@ -54,12 +54,14 @@ int main() {
             uart.printf("Temperature: %d\r\n", temp);
         }
 
+        time::wait(1000);
         uart.printf("Testing voltage reading\r\n");
         if (gfdb.requestBatteryVoltage(&voltage) != IO::CAN::CANStatus::OK) {
             uart.printf("Failed to read voltage\r\n");
         } else {
             uart.printf("Voltage: %d\r\n", voltage);
         }
+        time::wait(1000);
 
         uart.printf("Testing Vn High Res reading\r\n");
         if (gfdb.requestVnHighRes(&vnHigh) != IO::CAN::CANStatus::OK) {
@@ -67,6 +69,7 @@ int main() {
         } else {
             uart.printf("Vn High Res: %d\r\n", vnHigh);
         }
+        time::wait(1000);
 
         uart.printf("Testing Vp High Res reading\r\n");
         if (gfdb.requestVpHighRes(&vpHigh) != IO::CAN::CANStatus::OK) {
@@ -74,10 +77,16 @@ int main() {
         } else {
             uart.printf("Vp High Res: %d\r\n", vpHigh);
         }
+        time::wait(1000);
 
         uart.printf("--------------END---------------\r\n");
 
-        time::wait(1000);
+//        time::wait(1000);
+        uart.printf("Temperature: %d\r\n", temp);
+        uart.printf("Voltage: %d\r\n", voltage);
+        uart.printf("Vn High Res: %d\r\n", vnHigh);
+        uart.printf("Vp High Res: %d\r\n", vpHigh);
+
     }
 
     return 0;
