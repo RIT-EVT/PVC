@@ -280,7 +280,7 @@ void PreCharge::sendChangePDO() {
                                            static_cast<unsigned short>(batteryOneOkStatus) << 4  | static_cast<unsigned short>(batteryTwoOkStatus),
                                            static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(forwardStatus),
                                            static_cast<unsigned short>(pcStatus) << 4 | static_cast<unsigned short>(dcStatus),
-                                           static_cast<unsigned short>(contStatus) << 4 | static_cast<unsigned short>(apmStatus)};
+                                           static_cast<unsigned short>(contStatus) << 4 | static_cast<unsigned short>(apmStatus),};
     IO::CANMessage changePDOMessage(0x48A, 7, &payload[0], false);
     can.transmit(changePDOMessage);
 }
