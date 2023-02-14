@@ -106,7 +106,6 @@ namespace GFDB {
         if (result == IO::CAN::CANStatus::ERROR) return result;
 
         result = can.receive(&rxMessage, false);
-        time::wait(500); // Wait for data to be received due to interrupt
 
         return result;
     }
