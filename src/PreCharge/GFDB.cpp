@@ -93,7 +93,7 @@ namespace GFDB {
     }
 
     IO::CAN::CANStatus GFDB::setMaxBatteryVoltage(uint16_t* maxVoltage){
-        uint8_t payload[2] = {*maxVoltage >> 8, *maxVoltage & 0xFF};
+        uint8_t payload[2] = {static_cast<uint8_t>(*maxVoltage >> 8), static_cast<uint8_t>(*maxVoltage & 0xFF)};
 
         return sendCommand(0x62, payload, 4);
     }
