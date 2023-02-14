@@ -1,13 +1,12 @@
 #include <string.h>
 
-#include <EVT/io/UART.hpp>
 #include <EVT/io/GPIO.hpp>
+#include <EVT/io/UART.hpp>
 #include <EVT/io/manager.hpp>
 
 namespace IO = EVT::core::IO;
 
 constexpr size_t MAX_BUFF = 100;
-
 
 void printHelp(IO::UART& uart) {
     uart.printf("Menu\n\r");
@@ -27,14 +26,13 @@ void writeGPIO(IO::UART& uart, IO::GPIO& gpio) {
 
     uint8_t state = strtol(inputBuffer, nullptr, 10);
 
-    if(state != 0 && state != 1) {
+    if (state != 0 && state != 1) {
         uart.printf("INVALID STATE: %d\n", state);
         return;
     }
 
     gpio.writePin(state == 0 ? IO::GPIO::State::LOW : IO::GPIO::State::HIGH);
 }
-
 
 // 4 digital inputs
 // 1 ADC input
@@ -65,7 +63,7 @@ int main() {
     mcuDcCtl.writePin(IO::GPIO::State::LOW);
     mcuContCtl.writePin(IO::GPIO::State::LOW);
 
-    while(true) {
+    while (true) {
         printHelp(uart);
 
         uart.printf("Enter selection: ");
@@ -74,32 +72,32 @@ int main() {
 
         uint8_t cmd = strtol(inputBuffer, nullptr, 10);
 
-        switch(cmd) {
-            case 1:
-                uart.printf("Input Values:\n\r");
-                uart.printf("\tMCU_ESTOP_STATUS: %d\n\r", mcuEStopStatus.readPin());
-                uart.printf("\tKEY_IN_MCU: %d\n\r", keyInMcu.readPin());
-                uart.printf("\tBATTERY_1_OK_MCU: %d\n\r", battery1Ok.readPin());
-                uart.printf("\tBATTERY_2_OK_MCU: %d\n\r", battery2Ok.readPin());
-                break;
-            case 2:
-                writeGPIO(uart, mcuAPMCtl);
-                break;
-            case 3:
-                writeGPIO(uart, mcuFWEnCtl);
-                break;
-            case 4:
-                writeGPIO(uart, mcuPcCtl);
-                break;
-            case 5:
-                writeGPIO(uart, mcuDcCtl);
-                break;
-            case 6:
-                writeGPIO(uart, mcuContCtl);
-                break;
+        switch (cmd) {
+        case 1:
+            uart.printf("Input Values:\n\r");
+            uart.printf("\tMCU_ESTOP_STATUS: %d\n\r", mcuEStopStatus.readPin());
+            uart.printf("\tKEY_IN_MCU: %d\n\r", keyInMcu.readPin());
+            uart.printf("\tBATTERY_1_OK_MCU: %d\n\r", battery1Ok.readPin());
+            uart.printf("\tBATTERY_2_OK_MCU: %d\n\r", battery2Ok.readPin());
+            break;
+        case 2:
+            writeGPIO(uart, mcuAPMCtl);
+            break;
+        case 3:
+            writeGPIO(uart, mcuFWEnCtl);
+            break;
+        case 4:
+            writeGPIO(uart, mcuPcCtl);
+            break;
+        case 5:
+            writeGPIO(uart, mcuDcCtl);
+            break;
+        case 6:
+            writeGPIO(uart, mcuContCtl);
+            break;
 
-            default:
-                uart.printf("Invalid option: %d\n\r", cmd);
+        default:
+            uart.printf("Invalid option: %d\n\r", cmd);
         }
 
         uart.printf("\n\r");

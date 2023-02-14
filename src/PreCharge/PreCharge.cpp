@@ -9,16 +9,16 @@ namespace PreCharge {
 
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                      IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-                     IO::GPIO& apm, IO::GPIO& forward, IO::CAN& can) :  key(key),
-                                                                        batteryOne(batteryOne),
-                                                                        batteryTwo(batteryTwo),
-                                                                        eStop(eStop),
-                                                                        pc(pc),
-                                                                        dc(dc),
-                                                                        cont(cont),
-                                                                        apm(apm),
-                                                                        forward(forward),
-                                                                        can(can) {
+                     IO::GPIO& apm, IO::GPIO& forward, IO::CAN& can) : key(key),
+                                                                       batteryOne(batteryOne),
+                                                                       batteryTwo(batteryTwo),
+                                                                       eStop(eStop),
+                                                                       pc(pc),
+                                                                       dc(dc),
+                                                                       cont(cont),
+                                                                       apm(apm),
+                                                                       forward(forward),
+                                                                       can(can) {
     state = State::MC_OFF;
     prevState = State::MC_OFF;
 
@@ -39,7 +39,7 @@ void PreCharge::handle() {
     getSTO();  //update value of STO
     getMCKey();//update value of MC_KEY_IN
     getIOStatus(); //update value of IOStatus
-
+    
     Statusword = static_cast<uint8_t>(state);
     InputVoltage = 0; //Does not exist yet
     OutputVoltage = 0; //Does not exist yet
