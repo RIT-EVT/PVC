@@ -39,10 +39,9 @@ public:
         DISABLE = 0u,
         ENABLE = 1u
     };
+    
+    uint8_t  Statusword; //8
 
-    uint16_t IOStatus;     //16 //keyStatus:stoStatus:batteryOneOkStatus:batteryTwoOkStatus:eStopStatus:
-                           //pcStatus:dcStatus:contStatus:apmStatus:forwardStatus
-    uint8_t Statusword;    //8
     uint64_t InputVoltage; //16
     uint16_t OutputVoltage;//16
     uint16_t BasePTemp;    //16
@@ -71,7 +70,6 @@ public:
 
     /**
      * Constructor for pre-charge state machine
-     * 
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
@@ -84,7 +82,6 @@ public:
 
     /**
      * Handler running the pre-charge state switching
-     * 
      */
     void handle();
 
@@ -102,6 +99,11 @@ public:
      * 
      */
     void getMCKey();
+
+    /**
+     * Get the state of all IO instances and update IOStatus
+     */
+    void getIOStatus();
 
     /**
      * Set the Precharge state
@@ -208,8 +210,6 @@ public:
      */
     uint16_t getObjectDictionarySize();
 
-    void sendChangePDO();
-
 private:
     /** GPIO instance to monitor KEY_IN */
     IO::GPIO& key;
@@ -244,7 +244,13 @@ private:
     IO::GPIO::State forwardStatus;
 
     State state;
+    State prevState;
     uint64_t state_start_time;
+
+    /**
+     * Handles the sending of a CAN message upon each state change.
+    */
+    void sendChangePDO();
 
     /**
      * Have to know the size of the object dictionary for initialization
