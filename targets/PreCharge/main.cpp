@@ -74,18 +74,6 @@ int main() {
     // Initialize system
     IO::init();
 
-    // Set up pre_charge
-    IO::GPIO& key = IO::getGPIO<IO::Pin::PA_1>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& batteryOne = IO::getGPIO<IO::Pin::PA_10>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& batteryTwo = IO::getGPIO<IO::Pin::PA_9>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& eStop = IO::getGPIO<IO::Pin::PA_0>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& pc = IO::getGPIO<IO::Pin::PA_4>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& dc = IO::getGPIO<IO::Pin::PA_5>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& cont = IO::getGPIO<IO::Pin::PA_8>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& apm = IO::getGPIO<IO::Pin::PA_2>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
-    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, forward);
-
     // Queue that will store CANopen messages
     EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage> canOpenQueue;
 
@@ -97,7 +85,7 @@ int main() {
     DEV::Timerf302x8 timer(TIM2, 100);
 
     // Set up Logger
-    IO::UART& uart = IO::getUART<IO::Pin::UART_TX, IO::Pin::UART_RX>(9600);
+    IO::UART& uart = IO::getUART<IO::Pin::PB_6, IO::Pin::PB_7>(9600);
     log::LOGGER.setUART(&uart);
     log::LOGGER.setLogLevel(log::Logger::LogLevel::DEBUG);
     log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Logger initialized.");
@@ -114,6 +102,18 @@ int main() {
         EVT::core::log::LOGGER.log(log::Logger::LogLevel::ERROR, "Failed to connect to CAN network");
         return 1;
     }
+
+    // Set up pre_charge
+    IO::GPIO& key = IO::getGPIO<IO::Pin::PA_1>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& batteryOne = IO::getGPIO<IO::Pin::PA_10>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& batteryTwo = IO::getGPIO<IO::Pin::PA_9>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& eStop = IO::getGPIO<IO::Pin::PA_0>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& pc = IO::getGPIO<IO::Pin::PA_4>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& dc = IO::getGPIO<IO::Pin::PA_5>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& cont = IO::getGPIO<IO::Pin::PA_8>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& apm = IO::getGPIO<IO::Pin::PA_2>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
+    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, forward, can);
 
     ///////////////////////////////////////////////////////////////////////////
     // Setup CAN configuration, this handles making drivers, applying settings.
@@ -157,6 +157,13 @@ int main() {
     time::wait(500);
 
     EVT::core::log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Error: %d", CONodeGetErr(&canNode));
+
+    // Start with everything at 0
+    apm.writePin(IO::GPIO::State::LOW);
+    forward.writePin(IO::GPIO::State::LOW);
+    pc.writePin(IO::GPIO::State::LOW);
+    dc.writePin(IO::GPIO::State::LOW);
+    cont.writePin(IO::GPIO::State::LOW);
 
     while (1) {
         precharge.handle();//update state machine
