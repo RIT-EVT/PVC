@@ -46,7 +46,10 @@ int main() {
     int32_t vnHigh = 0;
     int32_t vpHigh = 0;
 
+    // Super loop trying to send CAN messages and receive them in the CAN Interrupt
     while (true) {
+        // Test temperature reading
+        time::wait(1000);
         uart.printf("Testing temperature reading\r\n");
         if (gfdb.requestTemp(&temp) != IO::CAN::CANStatus::OK) {
             uart.printf("Failed to read temperature\r\n");
@@ -54,6 +57,7 @@ int main() {
             uart.printf("Temperature: %d\r\n", temp);
         }
 
+        // Test voltage reading
         time::wait(1000);
         uart.printf("Testing voltage reading\r\n");
         if (gfdb.requestBatteryVoltage(&voltage) != IO::CAN::CANStatus::OK) {
@@ -61,30 +65,31 @@ int main() {
         } else {
             uart.printf("Voltage: %d\r\n", voltage);
         }
-        time::wait(1000);
 
+        time::wait(1000);
+        // Test Negative Voltage High Res reading
         uart.printf("Testing Vn High Res reading\r\n");
         if (gfdb.requestVnHighRes(&vnHigh) != IO::CAN::CANStatus::OK) {
             uart.printf("Failed to read Vn High Res\r\n");
         } else {
             uart.printf("Vn High Res: %d\r\n", vnHigh);
         }
-        time::wait(1000);
 
+        // Test Positive Voltage High Res reading
+        time::wait(1000);
         uart.printf("Testing Vp High Res reading\r\n");
         if (gfdb.requestVpHighRes(&vpHigh) != IO::CAN::CANStatus::OK) {
             uart.printf("Failed to read Vp High Res\r\n");
         } else {
             uart.printf("Vp High Res: %d\r\n", vpHigh);
         }
-        time::wait(1000);
 
+        // Print out all the values. Messages will most likely be handled by the interrupt though.
         uart.printf("--------------END---------------\r\n");
         uart.printf("Temperature: %d\r\n", temp);
         uart.printf("Voltage: %d\r\n", voltage);
         uart.printf("Vn High Res: %d\r\n", vnHigh);
         uart.printf("Vp High Res: %d\r\n", vpHigh);
-
     }
 
     return 0;
