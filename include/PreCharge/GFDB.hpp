@@ -1,6 +1,4 @@
-/**
- * SIM100 Driver for ground fault detection
- */
+
 
 #ifndef _EVT_GFDB_H
 #define _EVT_GFDB_H
@@ -13,6 +11,11 @@ namespace IO = EVT::core::IO;
 
 namespace GFDB {
 
+/**
+ * SIM100 Driver for ground fault detection
+ * https://sendyne.com/Datasheets/Sendyne%20SIM100MOD%20Datasheet%20V1.5.pdf
+ * https://sendyne.com/Datasheets/SIM100_CAN_protocol_v0.8a.pdf
+ */
 class GFDB {
 public:
     GFDB(IO::CAN& can);
