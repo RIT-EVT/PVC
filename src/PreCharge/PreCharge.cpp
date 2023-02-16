@@ -36,15 +36,15 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
 }
 
 void PreCharge::handle() {
-    getSTO();  //update value of STO
-    getMCKey();//update value of MC_KEY_IN
-    getIOStatus(); //update value of IOStatus
-    
+    getSTO();     //update value of STO
+    getMCKey();   //update value of MC_KEY_IN
+    getIOStatus();//update value of IOStatus
+
     Statusword = static_cast<uint8_t>(state);
     InputVoltage = 0; //Does not exist yet
-    OutputVoltage = 0; //Does not exist yet
-    BasePTemp = 0; //Does not exist yet
-    
+    OutputVoltage = 0;//Does not exist yet
+    BasePTemp = 0;    //Does not exist yet
+
     cyclicPDO = (InputVoltage << 32) | (OutputVoltage << 16) | BasePTemp;
 
     switch (state) {
@@ -151,14 +151,14 @@ void PreCharge::setForward(PreCharge::PinStatus state) {
 void PreCharge::mcOffState() {
     if (stoStatus == IO::GPIO::State::LOW) {
         state = State::ESTOPWAIT;
-        if(prevState != state) {
+        if (prevState != state) {
             sendChangePDO();
         }
         prevState = state;
     } else if (stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {
         state = State::PRECHARGE;
         state_start_time = time::millis();
-        if(prevState != state) {
+        if (prevState != state) {
             sendChangePDO();
         }
         prevState = state;
@@ -170,7 +170,7 @@ void PreCharge::mcOnState() {
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
         state_start_time = time::millis();
-        if(prevState != state) {
+        if (prevState != state) {
             sendChangePDO();
         }
         prevState = state;
@@ -181,7 +181,7 @@ void PreCharge::mcOnState() {
 void PreCharge::eStopState() {
     if (stoStatus == IO::GPIO::State::HIGH) {
         state = State::MC_OFF;
-        if(prevState != state) {
+        if (prevState != state) {
             sendChangePDO();
         }
         prevState = state;
@@ -191,7 +191,7 @@ void PreCharge::eStopState() {
 
 void PreCharge::prechargeState() {
     setPrecharge(PreCharge::PinStatus::ENABLE);
-    if(prevState != state) {
+    if (prevState != state) {
         sendChangePDO();
     }
     if ((time::millis() - state_start_time) > PRECHARGE_DELAY) {
@@ -207,7 +207,7 @@ void PreCharge::prechargeState() {
 
 void PreCharge::dischargeState() {
     setDischarge(PreCharge::PinStatus::ENABLE);
-    if(prevState != state) {
+    if (prevState != state) {
         sendChangePDO();
     }
     if ((time::millis() - state_start_time) > DISCHARGE_DELAY) {
@@ -222,7 +222,7 @@ void PreCharge::contOpenState() {
     setContactor(PreCharge::PinStatus::DISABLE);
     state = State::DISCHARGE;
     state_start_time = time::millis();
-    if(prevState != state) {
+    if (prevState != state) {
         sendChangePDO();
     }
     prevState = state;
@@ -243,7 +243,7 @@ void PreCharge::contCloseState() {
 
         state = State::MC_ON;
     }
-    if(prevState != state) {
+    if (prevState != state) {
         sendChangePDO();
     }
     prevState = state;
@@ -261,7 +261,7 @@ void PreCharge::forwardDisableState() {
 
         state = State::CONT_OPEN;
     }
-    if(prevState != state) {
+    if (prevState != state) {
         sendChangePDO();
     }
     prevState = state;
@@ -276,11 +276,15 @@ uint16_t PreCharge::getObjectDictionarySize() {
 }
 
 void PreCharge::sendChangePDO() {
-    uint8_t payload[] = {Statusword, 0x00, static_cast<unsigned short>(keyInStatus) << 4 | static_cast<unsigned short>(stoStatus),
-                                           static_cast<unsigned short>(batteryOneOkStatus) << 4  | static_cast<unsigned short>(batteryTwoOkStatus),
-                                           static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(forwardStatus),
-                                           static_cast<unsigned short>(pcStatus) << 4 | static_cast<unsigned short>(dcStatus),
-                                           static_cast<unsigned short>(contStatus) << 4 | static_cast<unsigned short>(apmStatus),};
+    uint8_t payload[] = {
+        Statusword,
+        0x00,
+        static_cast<unsigned short>(keyInStatus) << 4 | static_cast<unsigned short>(stoStatus),
+        static_cast<unsigned short>(batteryOneOkStatus) << 4 | static_cast<unsigned short>(batteryTwoOkStatus),
+        static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(forwardStatus),
+        static_cast<unsigned short>(pcStatus) << 4 | static_cast<unsigned short>(dcStatus),
+        static_cast<unsigned short>(contStatus) << 4 | static_cast<unsigned short>(apmStatus),
+    };
     IO::CANMessage changePDOMessage(0x48A, 7, &payload[0], false);
     can.transmit(changePDOMessage);
 }

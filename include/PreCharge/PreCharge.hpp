@@ -39,8 +39,8 @@ public:
         DISABLE = 0u,
         ENABLE = 1u
     };
-    
-    uint8_t  Statusword; //8
+
+    uint8_t Statusword;//8
 
     uint64_t InputVoltage; //16
     uint16_t OutputVoltage;//16

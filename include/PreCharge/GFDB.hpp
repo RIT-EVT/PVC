@@ -31,42 +31,42 @@ public:
      * @param highRes[out] The high resolution negative voltage
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestVnHighRes(int32_t *highRes);
+    IO::CAN::CANStatus requestVnHighRes(int32_t* highRes);
 
     /**
      * Requests the high resolution positive voltage from the GFDB
      * @param highRes[out] The high resolution positive voltage
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestVpHighRes(int32_t *highRes);
+    IO::CAN::CANStatus requestVpHighRes(int32_t* highRes);
 
     /**
      * Requests the temperature from the GFDB
      * @param temperature[out] The temperature
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestTemp(int32_t *temperature);
+    IO::CAN::CANStatus requestTemp(int32_t* temperature);
 
     /**
      * Requests the isolation state from the GFDB
      * @param isoState[out] The isolation state
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestIsolationState(uint8_t *isoState);
+    IO::CAN::CANStatus requestIsolationState(uint8_t* isoState);
 
     /**
      * Requests the isolation resistances from the GFDB
      * @param isoState[out] The isolation resistances
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestIsolationResistances(uint8_t *resistances);
+    IO::CAN::CANStatus requestIsolationResistances(uint8_t* resistances);
 
     /**
      * Requests the isolation capacitances from the GFDB
      * @param isoState[out] The isolation capacitances
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestIsolationCapacitances(uint8_t *capacitances);
+    IO::CAN::CANStatus requestIsolationCapacitances(uint8_t* capacitances);
 
     /**
      * Requests both the positive and negative voltages from the GFDB
@@ -74,21 +74,21 @@ public:
      * @param voltageN[out] The negative voltage
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestVpVn(uint16_t *voltageP, uint16_t *voltageN);
+    IO::CAN::CANStatus requestVpVn(uint16_t* voltageP, uint16_t* voltageN);
 
     /**
      * Requests the battery voltage from the GFDB
      * @param isoState[out] The isolation state
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestBatteryVoltage(uint16_t *batteryVoltage);
+    IO::CAN::CANStatus requestBatteryVoltage(uint16_t* batteryVoltage);
 
     /**
      * Requests any error flags from the GFDB
      * @param isoState[out] The isolation state
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestErrorFlags(uint8_t *errorFlags);
+    IO::CAN::CANStatus requestErrorFlags(uint8_t* errorFlags);
 
     /**
      * Restarts the GFDB
@@ -102,7 +102,7 @@ public:
      * @param isoState[out] The isolation state
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus turnExcitationPulseOff(uint16_t *maxVoltage);
+    IO::CAN::CANStatus turnExcitationPulseOff(uint16_t* maxVoltage);
 
     /**
      * Sets the max battery voltage of the GFDB
@@ -115,12 +115,11 @@ private:
     IO::CAN& can;
     const uint32_t GFDB_ID = 0xA100101;
 
+    IO::CAN::CANStatus requestData(uint8_t command, uint8_t* receiveBuff, size_t receiveSize);
 
-    IO::CAN::CANStatus requestData(uint8_t command, uint8_t *receiveBuff, size_t receiveSize);
-
-    IO::CAN::CANStatus sendCommand(uint8_t command, uint8_t *payload, size_t payloadSize);
+    IO::CAN::CANStatus sendCommand(uint8_t command, uint8_t* payload, size_t payloadSize);
 };
 
-}
+}// namespace GFDB
 
 #endif//_EVT_GFDB_H
