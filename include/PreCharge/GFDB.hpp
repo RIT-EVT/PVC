@@ -15,8 +15,6 @@ namespace GFDB {
 
 class GFDB {
 public:
-    const uint32_t GFDB_ID = 0xA100101;
-
     GFDB(IO::CAN& can);
 
     IO::CAN::CANStatus init();
@@ -47,6 +45,8 @@ public:
 
 private:
     IO::CAN& can;
+    const uint32_t GFDB_ID = 0xA100101;
+
 
     IO::CAN::CANStatus requestData(uint8_t command, uint8_t *receiveBuff, size_t receiveSize);
 
