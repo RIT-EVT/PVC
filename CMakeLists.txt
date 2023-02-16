@@ -35,8 +35,6 @@ project(${BOARD_LIB_NAME}
         LANGUAGES CXX C
         )
 
-add_library(${PROJECT_NAME} STATIC targets/GFDBTest/main.cpp)
-
 # Add sources
 target_sources(${PROJECT_NAME} PRIVATE
         src/PreCharge/PreCharge.cpp
