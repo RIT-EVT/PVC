@@ -80,8 +80,6 @@ int main() {
         time::wait(1000);
 
         uart.printf("--------------END---------------\r\n");
-
-//        time::wait(1000);
         uart.printf("Temperature: %d\r\n", temp);
         uart.printf("Voltage: %d\r\n", voltage);
         uart.printf("Vn High Res: %d\r\n", vnHigh);
