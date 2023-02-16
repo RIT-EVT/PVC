@@ -2,8 +2,8 @@
  * SIM100 Driver for ground fault detection
  */
 
-#ifndef PVC_GFDB_H
-#define PVC_GFDB_H
+#ifndef _EVT_GFDB_H
+#define _EVT_GFDB_H
 
 #include <EVT/io/CAN.hpp>
 #include <EVT/utils/time.hpp>
@@ -55,4 +55,4 @@ private:
 
 }
 
-#endif//PVC_GFDB_H
+#endif//_EVT_GFDB_H
