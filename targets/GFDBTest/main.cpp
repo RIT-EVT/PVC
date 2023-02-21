@@ -66,7 +66,7 @@ int main() {
         time::wait(1000);
         // Test Negative Voltage High Res reading
         uart.printf("Testing Vn High Res reading\r\n");
-        if (gfdb.requestVnHighRes(&vnHigh) != IO::CAN::CANStatus::OK) {
+        if (gfdb.requestVoltagePositiveHighRes(&vnHigh) != IO::CAN::CANStatus::OK) {
             uart.printf("Failed to read Vn High Res\r\n");
         } else {
             uart.printf("Vn High Res: %d\r\n", vnHigh);
@@ -75,7 +75,7 @@ int main() {
         // Test Positive Voltage High Res reading
         time::wait(1000);
         uart.printf("Testing Vp High Res reading\r\n");
-        if (gfdb.requestVpHighRes(&vpHigh) != IO::CAN::CANStatus::OK) {
+        if (gfdb.requestVoltageNegativeHighRes(&vpHigh) != IO::CAN::CANStatus::OK) {
             uart.printf("Failed to read Vp High Res\r\n");
         } else {
             uart.printf("Vp High Res: %d\r\n", vpHigh);

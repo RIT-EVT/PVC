@@ -7,7 +7,7 @@ namespace GFDB {
 
 GFDB::GFDB(IO::CAN& can) : can(can){};
 
-IO::CAN::CANStatus GFDB::requestVnHighRes(int32_t* highRes) {
+IO::CAN::CANStatus GFDB::requestVoltagePositiveHighRes(int32_t* highRes) {
     uint8_t rxBuffer[8] = {};
     IO::CAN::CANStatus result = requestData(VN_HIGH_RES_CMD, rxBuffer, 8);
     if (result == IO::CAN::CANStatus::ERROR)
@@ -17,7 +17,7 @@ IO::CAN::CANStatus GFDB::requestVnHighRes(int32_t* highRes) {
     return IO::CAN::CANStatus::OK;
 }
 
-IO::CAN::CANStatus GFDB::requestVpHighRes(int32_t* highRes) {
+IO::CAN::CANStatus GFDB::requestVoltageNegativeHighRes(int32_t* highRes) {
     uint8_t rxBuffer[8] = {};
     IO::CAN::CANStatus result = requestData(VP_HIGH_RES_CMD, rxBuffer, 8);
     if (result == IO::CAN::CANStatus::ERROR)
@@ -50,7 +50,7 @@ IO::CAN::CANStatus GFDB::requestIsolationCapacitances(uint8_t* capacitances) {
     return requestData(ISO_CAPACITANCES_REQ_CMD, capacitances, 8);
 }
 
-IO::CAN::CANStatus GFDB::requestVpVn(uint16_t* voltageP, uint16_t* voltageN) {
+IO::CAN::CANStatus GFDB::requestVoltagesPositiveNegative(uint16_t* voltageP, uint16_t* voltageN) {
     uint8_t rxBuffer[8] = {};
 
     IO::CAN::CANStatus result = requestData(VP_VN_REQ_CMD, rxBuffer, 8);

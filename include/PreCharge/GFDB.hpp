@@ -49,7 +49,7 @@ public:
      * @param[out]  highRes The high resolution negative voltage
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestVnHighRes(int32_t* highRes);
+    IO::CAN::CANStatus requestVoltagePositiveHighRes(int32_t* highRes);
 
     /**
      * Requests the high resolution positive voltage from the GFDB
@@ -57,7 +57,7 @@ public:
      * @param[out] highRes The high resolution positive voltage
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestVpHighRes(int32_t* highRes);
+    IO::CAN::CANStatus requestVoltageNegativeHighRes(int32_t* highRes);
 
     /**
      * Requests the temperature from the GFDB
@@ -98,7 +98,7 @@ public:
      * @param[out] voltageN The negative voltage
      * @return CAN Status of the request
      */
-    IO::CAN::CANStatus requestVpVn(uint16_t* voltageP, uint16_t* voltageN);
+    IO::CAN::CANStatus requestVoltagesPositiveNegative(uint16_t* voltageP, uint16_t* voltageN);
 
     /**
      * Requests the battery voltage from the GFDB
