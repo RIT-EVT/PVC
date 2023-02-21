@@ -85,7 +85,7 @@ IO::CAN::CANStatus GFDB::restartGFDB() {
     return sendCommand(0xC1, payload, 4);
 }
 
-IO::CAN::CANStatus GFDB::turnExcitationPulseOff(uint16_t* maxVoltage) {
+IO::CAN::CANStatus GFDB::turnExcitationPulseOff() {
     uint8_t payload[4] = {0xDE, 0xAD, 0xBE, 0x1F};
 
     return sendCommand(0x62, payload, 4);
