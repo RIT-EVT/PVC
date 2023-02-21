@@ -28,7 +28,6 @@ enum GFDB_COMMAND {
     SET_MAX_VOLTAGE_CMD = 0xF0
 };
 
-
 /**
  * SIM100 Driver for ground fault detection
  * https://sendyne.com/Datasheets/Sendyne%20SIM100MOD%20Datasheet%20V1.5.pdf
