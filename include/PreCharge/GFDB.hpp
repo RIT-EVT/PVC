@@ -24,13 +24,6 @@ public:
     GFDB(IO::CAN& can);
 
     /**
-     * Connects the GFDB's CAN to the network
-     *
-     * @return CAN Connection status
-     */
-    IO::CAN::CANStatus init();
-
-    /**
      * Requests the high resolution negative voltage from the GFDB
      *
      * @param highRes[out] The high resolution negative voltage

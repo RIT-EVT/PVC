@@ -7,10 +7,6 @@ namespace GFDB {
 
 GFDB::GFDB(IO::CAN& can) : can(can){};
 
-IO::CAN::CANStatus GFDB::init() {
-    return can.connect();
-}
-
 IO::CAN::CANStatus GFDB::requestVnHighRes(int32_t* highRes) {
     uint8_t rxBuffer[8] = {};
     IO::CAN::CANStatus result = requestData(0x60, rxBuffer, 8);
