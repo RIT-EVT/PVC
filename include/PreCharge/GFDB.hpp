@@ -10,6 +10,26 @@ namespace IO = EVT::core::IO;
 namespace GFDB {
 
 /**
+ * All possible commands for the GFDB
+ */
+enum GFDB_COMMAND {
+    VN_HIGH_RES_CMD = 0x60,
+    VP_HIGH_RES_CMD = 0x61,
+    TEMP_REQ_CMD = 0x80,
+    ISO_STATE_REQ_CMD = 0xE0,
+    ISO_RESISTANCES_REQ_CMD = 0xE1,
+    ISO_CAPACITANCES_REQ_CMD = 0xE2,
+    VP_VN_REQ_CMD = 0xE3,
+    BATTERY_VOLTAGE_REQ_CMD = 0xE4,
+    ERROR_FLAGS_REQ_CMD = 0xE5,
+
+    RESTART_CMD = 0xC1,
+    EXCITATION_PULSE_OFF_CMD = 0x62,
+    SET_MAX_VOLTAGE_CMD = 0xF0
+};
+
+
+/**
  * SIM100 Driver for ground fault detection
  * https://sendyne.com/Datasheets/Sendyne%20SIM100MOD%20Datasheet%20V1.5.pdf
  * https://sendyne.com/Datasheets/SIM100_CAN_protocol_v0.8a.pdf
