@@ -10,16 +10,16 @@ namespace PreCharge {
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                      IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
                      IO::GPIO& apm, IO::GPIO& forward, GFDB::GFDB& gfdb, IO::CAN& can) : key(key),
-                                                                       batteryOne(batteryOne),
-                                                                       batteryTwo(batteryTwo),
-                                                                       eStop(eStop),
-                                                                       pc(pc),
-                                                                       dc(dc),
-                                                                       cont(cont),
-                                                                       apm(apm),
-                                                                       forward(forward),
-                                                                       gfdb(gfdb),
-                                                                       can(can) {
+                                                                                         batteryOne(batteryOne),
+                                                                                         batteryTwo(batteryTwo),
+                                                                                         eStop(eStop),
+                                                                                         pc(pc),
+                                                                                         dc(dc),
+                                                                                         cont(cont),
+                                                                                         apm(apm),
+                                                                                         forward(forward),
+                                                                                         gfdb(gfdb),
+                                                                                         can(can) {
     state = State::MC_OFF;
     prevState = State::MC_OFF;
 
