@@ -81,12 +81,12 @@ void PreCharge::handle() {
 }
 
 void PreCharge::getSTO() {
-    uint8_t* gfdBuffer;
-    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(gfdBuffer);
+    uint8_t gfdBuffer;
+    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
     //GFDB messages gotten from datasheet. 00 = no error, 10 = warning, 11 = error
-    if (gfdbConn == IO::CAN::CANStatus::OK && (*gfdBuffer == 0b00 || *gfdBuffer == 0b10)) {
+    if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
         gfdStatus = 0;
-    } else if (*gfdBuffer == 0b11) {
+    } else if (gfdBuffer == 0b11) {
         gfdStatus = 1;
     }
 

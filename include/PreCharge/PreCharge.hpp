@@ -71,6 +71,18 @@ public:
 
     /**
      * Constructor for pre-charge state machine
+     * 
+     * key: GPIO for motorcycle key
+     * batteryOne: GPIO for battery ok signal
+     * batteryTwo: GPIO for battery ok signal
+     * eStop: GPIO for motorcycle e-stop
+     * pc: GPIO for precharge contactor
+     * dc: GPIO for discharge contactor
+     * cont: GPIO for main contactor
+     * apm: GPIO for apm control
+     * forward: GPIO for forward enable
+     * gfdb: GPIO for gfdb fault signal
+     * can: can instance for CANopen
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
