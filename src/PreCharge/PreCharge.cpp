@@ -9,16 +9,17 @@ namespace PreCharge {
 
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                      IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-                     IO::GPIO& apm, IO::GPIO& forward, IO::CAN& can) : key(key),
-                                                                       batteryOne(batteryOne),
-                                                                       batteryTwo(batteryTwo),
-                                                                       eStop(eStop),
-                                                                       pc(pc),
-                                                                       dc(dc),
-                                                                       cont(cont),
-                                                                       apm(apm),
-                                                                       forward(forward),
-                                                                       can(can) {
+                     IO::GPIO& apm, IO::GPIO& forward, GFDB::GFDB& gfdb, IO::CAN& can) : key(key),
+                                                                                         batteryOne(batteryOne),
+                                                                                         batteryTwo(batteryTwo),
+                                                                                         eStop(eStop),
+                                                                                         pc(pc),
+                                                                                         dc(dc),
+                                                                                         cont(cont),
+                                                                                         apm(apm),
+                                                                                         forward(forward),
+                                                                                         gfdb(gfdb),
+                                                                                         can(can) {
     state = State::MC_OFF;
     prevState = State::MC_OFF;
 
@@ -32,7 +33,9 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     dcStatus = IO::GPIO::State::LOW;
     contStatus = IO::GPIO::State::LOW;
     apmStatus = IO::GPIO::State::LOW;
-    //TODO: Add GFD
+    forwardStatus = IO::GPIO::State::LOW;
+
+    gfdStatus = 0;
 }
 
 void PreCharge::handle() {
@@ -78,10 +81,18 @@ void PreCharge::handle() {
 }
 
 void PreCharge::getSTO() {
+    uint8_t gfdBuffer;
+    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
+    //GFDB messages gotten from datasheet. 00 = no error, 10 = warning, 11 = error
+    if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
+        gfdStatus = 0;
+    } else if (gfdBuffer == 0b11) {
+        gfdStatus = 1;
+    }
+
     batteryOneOkStatus = batteryOne.readPin();
     batteryTwoOkStatus = batteryTwo.readPin();
     eStopActiveStatus = eStop.readPin();
-    //TODO: Add GFD
 
     if (batteryOneOkStatus == IO::GPIO::State::HIGH && batteryTwoOkStatus == IO::GPIO::State::HIGH && eStopActiveStatus == IO::GPIO::State::HIGH) {
         stoStatus = IO::GPIO::State::HIGH;

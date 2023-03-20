@@ -3,6 +3,7 @@
 #include <Canopen/co_core.h>
 #include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
+#include <PreCharge/GFDB.hpp>
 
 namespace IO = EVT::core::IO;
 
@@ -70,10 +71,22 @@ public:
 
     /**
      * Constructor for pre-charge state machine
+     * 
+     * @param[in] key GPIO for motorcycle key
+     * @param[in] batteryOne GPIO for battery ok signal
+     * @param[in] batteryTwo GPIO for battery ok signal
+     * @param[in] eStop GPIO for motorcycle e-stop
+     * @param[in] pc GPIO for precharge contactor
+     * @param[in] dc GPIO for discharge contactor
+     * @param[in] cont GPIO for main contactor
+     * @param[in] apm GPIO for apm control
+     * @param[in] forward GPIO for forward enable
+     * @param[in] gfdb GPIO for gfdb fault signal
+     * @param[in] can can instance for CANopen
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-              IO::GPIO& apm, IO::GPIO& forward, IO::CAN& can);
+              IO::GPIO& apm, IO::GPIO& forward, GFDB::GFDB& gfdb, IO::CAN& can);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -229,7 +242,9 @@ private:
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
     IO::GPIO& forward;
-
+    /** GFDB instance to handle isolation status*/
+    GFDB::GFDB& gfdb;
+    /** CAN instance to handle CANOpen processes*/
     IO::CAN& can;
 
     IO::GPIO::State keyInStatus;
@@ -242,6 +257,8 @@ private:
     IO::GPIO::State contStatus;
     IO::GPIO::State apmStatus;
     IO::GPIO::State forwardStatus;
+
+    uint8_t gfdStatus;
 
     State state;
     State prevState;
