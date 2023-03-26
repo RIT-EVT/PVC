@@ -2,7 +2,7 @@
  * SIM100 Driver Test
  */
 #include <EVT/io/CAN.hpp>
-#include <EVT/io/manager.hpp>
+#include <EVT/manager.hpp>
 #include <EVT/utils/time.hpp>
 #include <PreCharge/GFDB.hpp>
 #include <PreCharge/PreCharge.hpp>
@@ -26,11 +26,11 @@ void canIRQHandler(IO::CANMessage& message, void* priv) {
 
 int main() {
     // Initialize system
-    IO::init();
+    EVT::core::platform::init();
 
     // Get CAN instance with loopback enabled
     IO::CAN& can = IO::getCAN<PreCharge::PreCharge::CAN_TX_PIN, PreCharge::PreCharge::CAN_RX_PIN>();
-    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600);
+    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600, true);
     can.addIRQHandler(canIRQHandler, &uart);
 
     // Attempt to join the CAN network
@@ -89,6 +89,4 @@ int main() {
         uart.printf("Vn High Res: %d\r\n", vnHigh);
         uart.printf("Vp High Res: %d\r\n", vpHigh);
     }
-
-    return 0;
 }

@@ -3,7 +3,7 @@
 #include <PreCharge/PreCharge.hpp>
 #include <EVT/io/GPIO.hpp>
 #include <EVT/io/UART.hpp>
-#include <EVT/io/manager.hpp>
+#include <EVT/manager.hpp>
 
 namespace IO = EVT::core::IO;
 
@@ -40,9 +40,12 @@ void writeGPIO(IO::UART& uart, IO::GPIO& gpio) {
 // 5 outputs
 
 int main() {
+    // Initialize system
+    EVT::core::platform::init();
+
     char inputBuffer[MAX_BUFF];
 
-    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600);
+    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600, true);
 
     // Outputs
     IO::GPIO& mcuAPMCtl = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>();

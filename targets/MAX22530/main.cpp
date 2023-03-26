@@ -3,7 +3,7 @@
  */
 
 #include <EVT/io/UART.hpp>
-#include <EVT/io/manager.hpp>
+#include <EVT/manager.hpp>
 #include <EVT/io/pin.hpp>
 #include <EVT/utils/log.hpp>
 #include <PreCharge/dev/MAX22530.hpp>
@@ -18,8 +18,11 @@ constexpr uint8_t deviceCount = 1;
 IO::GPIO* devices[deviceCount];
 
 int main() {
+    // Initialize system
+    EVT::core::platform::init();
+
     // Setup IO
-    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600);
+    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600, true);
 
     // Setup SPI
     devices[0] = &IO::getGPIO<PreCharge::PreCharge::SPI_CS>(EVT::core::IO::GPIO::Direction::OUTPUT);
