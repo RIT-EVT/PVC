@@ -3,6 +3,7 @@
 #include <Canopen/co_core.h>
 #include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
+#include <EVT/io/pin.hpp>
 #include <PreCharge/GFDB.hpp>
 
 namespace IO = EVT::core::IO;
@@ -86,7 +87,7 @@ public:
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-              IO::GPIO& apm, IO::GPIO& forward, GFDB::GFDB& gfdb, IO::CAN& can);
+              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -241,7 +242,7 @@ private:
     /** GPIO instance to toggle APM_CTL */
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
-    IO::GPIO& forward;
+//    IO::GPIO& forward;
     /** GFDB instance to handle isolation status*/
     GFDB::GFDB& gfdb;
     /** CAN instance to handle CANOpen processes*/

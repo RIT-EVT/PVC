@@ -113,9 +113,9 @@ int main() {
     IO::GPIO& dc = IO::getGPIO<IO::Pin::PA_5>(IO::GPIO::Direction::OUTPUT);
     IO::GPIO& cont = IO::getGPIO<IO::Pin::PA_8>(IO::GPIO::Direction::OUTPUT);
     IO::GPIO& apm = IO::getGPIO<IO::Pin::PA_2>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
+//    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
-    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, forward, gfdb, can);
+    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can);
 
     ///////////////////////////////////////////////////////////////////////////
     // Setup CAN configuration, this handles making drivers, applying settings.
@@ -158,11 +158,9 @@ int main() {
 
     time::wait(500);
 
-    EVT::core::log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Error: %d", CONodeGetErr(&canNode));
-
     // Start with everything at 0
     apm.writePin(IO::GPIO::State::LOW);
-    forward.writePin(IO::GPIO::State::LOW);
+//    forward.writePin(IO::GPIO::State::LOW);
     pc.writePin(IO::GPIO::State::LOW);
     dc.writePin(IO::GPIO::State::LOW);
     cont.writePin(IO::GPIO::State::LOW);

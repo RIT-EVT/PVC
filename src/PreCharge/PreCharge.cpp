@@ -1,5 +1,6 @@
 #include <PreCharge/PreCharge.hpp>
 
+#include <EVT/utils/log.hpp>
 #include <EVT/utils/time.hpp>
 
 namespace IO = EVT::core::IO;
@@ -9,7 +10,7 @@ namespace PreCharge {
 
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                      IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-                     IO::GPIO& apm, IO::GPIO& forward, GFDB::GFDB& gfdb, IO::CAN& can) : key(key),
+                     IO::GPIO& apm,  GFDB::GFDB& gfdb, IO::CAN& can) : key(key),
                                                                                          batteryOne(batteryOne),
                                                                                          batteryTwo(batteryTwo),
                                                                                          eStop(eStop),
@@ -17,7 +18,6 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                                                                                          dc(dc),
                                                                                          cont(cont),
                                                                                          apm(apm),
-                                                                                         forward(forward),
                                                                                          gfdb(gfdb),
                                                                                          can(can) {
     state = State::MC_OFF;
@@ -116,7 +116,7 @@ void PreCharge::getIOStatus() {
     dcStatus = dc.readPin();
     contStatus = cont.readPin();
     apmStatus = apm.readPin();
-    forwardStatus = forward.readPin();
+//    forwardStatus = forward.readPin();
 }
 
 void PreCharge::setPrecharge(PreCharge::PinStatus state) {
@@ -152,11 +152,11 @@ void PreCharge::setAPM(PreCharge::PinStatus state) {
 }
 
 void PreCharge::setForward(PreCharge::PinStatus state) {
-    if (static_cast<uint8_t>(state)) {
-        forward.writePin(IO::GPIO::State::HIGH);
-    } else {
-        forward.writePin(IO::GPIO::State::LOW);
-    }
+//    if (static_cast<uint8_t>(state)) {
+//        forward.writePin(IO::GPIO::State::HIGH);
+//    } else {
+//        forward.writePin(IO::GPIO::State::LOW);
+//    }
 }
 
 void PreCharge::mcOffState() {
@@ -298,6 +298,9 @@ void PreCharge::sendChangePDO() {
     };
     IO::CANMessage changePDOMessage(0x48A, 7, &payload[0], false);
     can.transmit(changePDOMessage);
+
+    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; f: %d, pc: %d, dc: %d, c: %d, apm: %d",
+                               state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, forwardStatus, pcStatus, dcStatus, contStatus, apmStatus);
 }
 
 }// namespace PreCharge
