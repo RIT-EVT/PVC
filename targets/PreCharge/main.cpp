@@ -79,14 +79,14 @@ int main() {
     EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage> canOpenQueue;
 
     // Initialize CAN, add an IRQ that will populate the above queue
-    IO::CAN& can = IO::getCAN<IO::Pin::PA_12, IO::Pin::PA_11>();
+    IO::CAN& can = IO::getCAN<PreCharge::PreCharge::CAN_TX_PIN, PreCharge::PreCharge::CAN_RX_PIN>();
     can.addIRQHandler(canInterruptHandler, reinterpret_cast<void*>(&canOpenQueue));
 
     // Initialize the timer
     DEV::Timerf302x8 timer(TIM2, 100);
 
     // Set up Logger
-    IO::UART& uart = IO::getUART<IO::Pin::PB_6, IO::Pin::PB_7>(9600);
+    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600);
     log::LOGGER.setUART(&uart);
     log::LOGGER.setLogLevel(log::Logger::LogLevel::DEBUG);
     log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Logger initialized.");
@@ -105,14 +105,14 @@ int main() {
     }
 
     // Set up pre_charge
-    IO::GPIO& key = IO::getGPIO<IO::Pin::PA_1>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& batteryOne = IO::getGPIO<IO::Pin::PA_10>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& batteryTwo = IO::getGPIO<IO::Pin::PA_9>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& eStop = IO::getGPIO<IO::Pin::PA_0>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& pc = IO::getGPIO<IO::Pin::PA_4>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& dc = IO::getGPIO<IO::Pin::PA_5>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& cont = IO::getGPIO<IO::Pin::PA_8>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& apm = IO::getGPIO<IO::Pin::PA_2>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& key = IO::getGPIO<PreCharge::PreCharge::KEY_IN_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& batteryOne = IO::getGPIO<PreCharge::PreCharge::BAT_OK_1_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& batteryTwo = IO::getGPIO<PreCharge::PreCharge::BAT_OK_2_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& eStop = IO::getGPIO<PreCharge::PreCharge::ESTOP_IN_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& pc = IO::getGPIO<PreCharge::PreCharge::PC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& dc = IO::getGPIO<PreCharge::PreCharge::DC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& cont = IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& apm = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
 //    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
     PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can);

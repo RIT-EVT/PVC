@@ -37,6 +37,27 @@ public:
         FORWARD_DISABLE = 7u
     };
 
+    /** PVC Pinout */
+    static constexpr IO::Pin UART_TX_PIN = IO::Pin::PB_6;
+    static constexpr IO::Pin UART_RX_PIN = IO::Pin::PB_7;
+    static constexpr IO::Pin CAN_TX_PIN = IO::Pin::PA_12;
+    static constexpr IO::Pin CAN_RX_PIN = IO::Pin::PA_11;
+    static constexpr IO::Pin KEY_IN_PIN = IO::Pin::PF_1;
+    static constexpr IO::Pin BAT_OK_1_PIN = IO::Pin::PB_5;
+    static constexpr IO::Pin BAT_OK_2_PIN = IO::Pin::PB_4;
+    static constexpr IO::Pin ESTOP_IN_PIN = IO::Pin::PF_0;
+    static constexpr IO::Pin PC_CTL_PIN = IO::Pin::PA_3;
+    static constexpr IO::Pin DC_CTL_PIN = IO::Pin::PA_4;
+    static constexpr IO::Pin APM_CTL_PIN = IO::Pin::PA_2;
+    static constexpr IO::Pin CONT1_PIN = IO::Pin::PA_10;
+    static constexpr IO::Pin CONT2_PIN = IO::Pin::PA_9;
+    static constexpr IO::Pin SPI_CS = IO::Pin::PB_0;
+    static constexpr IO::Pin SPI_MOSI = IO::Pin::PA_7;
+    static constexpr IO::Pin SPI_MISO = IO::Pin::PA_6;
+    static constexpr IO::Pin SPI_SCK = IO::Pin::PA_5;
+    static constexpr IO::Pin SPI_INT = IO::Pin::PA_8;
+
+
     enum class PinStatus {
         DISABLE = 0u,
         ENABLE = 1u

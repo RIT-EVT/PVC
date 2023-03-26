@@ -5,6 +5,7 @@
 #include <EVT/io/manager.hpp>
 #include <EVT/utils/time.hpp>
 #include <PreCharge/GFDB.hpp>
+#include <PreCharge/PreCharge.hpp>
 
 namespace IO = EVT::core::IO;
 namespace time = EVT::core::time;
@@ -28,8 +29,8 @@ int main() {
     IO::init();
 
     // Get CAN instance with loopback enabled
-    IO::CAN& can = IO::getCAN<IO::Pin::PA_12, IO::Pin::PA_11>();
-    IO::UART& uart = IO::getUART<IO::Pin::UART_TX, IO::Pin::UART_RX>(9600);
+    IO::CAN& can = IO::getCAN<PreCharge::PreCharge::CAN_TX_PIN, PreCharge::PreCharge::CAN_RX_PIN>();
+    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600);
     can.addIRQHandler(canIRQHandler, &uart);
 
     // Attempt to join the CAN network
