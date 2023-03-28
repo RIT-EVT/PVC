@@ -82,6 +82,12 @@ int main() {
     IO::CAN& can = IO::getCAN<PreCharge::PreCharge::CAN_TX_PIN, PreCharge::PreCharge::CAN_RX_PIN>();
     can.addIRQHandler(canInterruptHandler, reinterpret_cast<void*>(&canOpenQueue));
 
+    // Initialize SPI
+    IO::GPIO* CSPins[1];
+    CSPins[0] = &IO::getGPIO<PreCharge::PreCharge::SPI_CS>(IO::GPIO::Direction::OUTPUT);
+    CSPins[0]->writePin(IO::GPIO::State::HIGH);
+    IO::SPI& spi = IO::getSPI<PreCharge::PreCharge::SPI_SCK, PreCharge::PreCharge::SPI_MOSI, PreCharge::PreCharge::SPI_MISO>(CSPins, 1);
+
     // Initialize the timer
     DEV::Timer& timer = DEV::getTimer<DEV::MCUTimer::Timer2>(100);
 
@@ -111,11 +117,12 @@ int main() {
     IO::GPIO& eStop = IO::getGPIO<PreCharge::PreCharge::ESTOP_IN_PIN>(IO::GPIO::Direction::INPUT);
     IO::GPIO& pc = IO::getGPIO<PreCharge::PreCharge::PC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
     IO::GPIO& dc = IO::getGPIO<PreCharge::PreCharge::DC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& cont = IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& cont1 = IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& cont2 = IO::getGPIO<PreCharge::PreCharge::CONT2_PIN>(IO::GPIO::Direction::OUTPUT);
     IO::GPIO& apm = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
 //    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
-    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can);
+    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont1, cont2, apm, gfdb, can, spi);
 
     ///////////////////////////////////////////////////////////////////////////
     // Setup CAN configuration, this handles making drivers, applying settings.
@@ -163,7 +170,8 @@ int main() {
 //    forward.writePin(IO::GPIO::State::LOW);
     pc.writePin(IO::GPIO::State::LOW);
     dc.writePin(IO::GPIO::State::LOW);
-    cont.writePin(IO::GPIO::State::LOW);
+    cont1.writePin(IO::GPIO::State::LOW);
+    cont2.writePin(IO::GPIO::State::LOW);
 
     while (1) {
         precharge.handle();//update state machine

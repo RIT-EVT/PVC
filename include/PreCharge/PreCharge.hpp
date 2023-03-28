@@ -3,6 +3,7 @@
 #include <Canopen/co_core.h>
 #include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
+#include <EVT/io/SPI.hpp>
 #include <EVT/io/pin.hpp>
 #include <PreCharge/GFDB.hpp>
 
@@ -57,10 +58,16 @@ public:
     static constexpr IO::Pin SPI_SCK = IO::Pin::PA_5;
     static constexpr IO::Pin SPI_INT = IO::Pin::PA_8;
 
-
     enum class PinStatus {
         DISABLE = 0u,
-        ENABLE = 1u
+        ENABLE = 1u,
+        HOLD = 2u
+    };
+
+    enum class PrechargeStatus {
+        OK = 0u,
+        DONE = 1u,
+        ERROR = 2u
     };
 
     uint8_t Statusword;//8
@@ -72,9 +79,13 @@ public:
     uint64_t changePDO;
     uint64_t cyclicPDO;
 
-    static constexpr uint16_t PRECHARGE_DELAY = 5250;      // 5.25 seconds
     static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
+
+    static constexpr uint16_t PACK_VOLTAGE = 96; // 96V Pack
+    static constexpr float CONST_E = 2.71828;
+    static constexpr uint8_t CONST_R = 30;
+    static constexpr float CONST_C = 0.014;
 
     /**
      * Number of attempts that will be made to check the STO status
@@ -100,15 +111,17 @@ public:
      * @param[in] eStop GPIO for motorcycle e-stop
      * @param[in] pc GPIO for precharge contactor
      * @param[in] dc GPIO for discharge contactor
-     * @param[in] cont GPIO for main contactor
+     * @param[in] cont1 GPIO for main contactor
+     * @param[in] cont2 GPIO for main contactor
      * @param[in] apm GPIO for apm control
      * @param[in] forward GPIO for forward enable
      * @param[in] gfdb GPIO for gfdb fault signal
      * @param[in] can can instance for CANopen
+     * @param[in] spi spi instance for precharge  voltage monitoring
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can);
+              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont1,
+              IO::GPIO& cont2, IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, IO::SPI& spi);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -128,6 +141,24 @@ public:
     * @return value of STO, 0 or 1
     */
     void getSTO();
+
+    /**
+     * Get the value of the Precharge compared against the ideal precharge voltage curve
+     * 
+     * DONE signifies that the precharge system has reached the target voltage without any errors
+     * OK signifies that the precharge system is not at target voltage and there are no errors
+     * ERROR signifies that the precharge system has either lagged behind or overshot the ideal curve
+     * 
+     * @return int value of PrechargeStatus enum
+    */
+    int getPrechargeStatus();
+
+    /**
+     * Get the current expected voltage based on the current precharge time
+     * 
+     * @return float value of expected voltage in Volts
+    */
+    float solveForVoltage();
 
     /**
      * Get the state of MC_KEY_IN
@@ -166,7 +197,7 @@ public:
      * 
      * @param state 0 = forward disabled, 1 = forward enabled
      */
-    void setForward(PinStatus state);
+    // void setForward(PinStatus state);
 
     /**
      * Set the APM state
@@ -258,8 +289,10 @@ private:
     IO::GPIO& pc;
     /** GPIO instance to toggle DC_CTL */
     IO::GPIO& dc;
-    /** GPIO instance to toggle CONT_CTL */
-    IO::GPIO& cont;
+    /** GPIO instance to toggle CONT1_CTL */
+    IO::GPIO& cont1;
+    /** GPIO instance to toggle CONT2_CTL */
+    IO::GPIO& cont2;
     /** GPIO instance to toggle APM_CTL */
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
@@ -268,6 +301,8 @@ private:
     GFDB::GFDB& gfdb;
     /** CAN instance to handle CANOpen processes*/
     IO::CAN& can;
+    /** SPI instance to handle precharge voltage monitoring*/
+    IO::SPI& spi;
 
     IO::GPIO::State keyInStatus;
     IO::GPIO::State stoStatus;
@@ -276,9 +311,10 @@ private:
     IO::GPIO::State eStopActiveStatus;
     IO::GPIO::State pcStatus;
     IO::GPIO::State dcStatus;
-    IO::GPIO::State contStatus;
+    IO::GPIO::State cont1Status;
+    IO::GPIO::State cont2Status;
     IO::GPIO::State apmStatus;
-    IO::GPIO::State forwardStatus;
+    // IO::GPIO::State forwardStatus;
 
     uint8_t gfdStatus;
 

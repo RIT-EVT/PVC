@@ -9,17 +9,19 @@ namespace time = EVT::core::time;
 namespace PreCharge {
 
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-                     IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-                     IO::GPIO& apm,  GFDB::GFDB& gfdb, IO::CAN& can) : key(key),
+                     IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont1,
+                     IO::GPIO& cont2, IO::GPIO& apm,  GFDB::GFDB& gfdb, IO::CAN& can, IO::SPI& spi) : key(key),
                                                                                          batteryOne(batteryOne),
                                                                                          batteryTwo(batteryTwo),
                                                                                          eStop(eStop),
                                                                                          pc(pc),
                                                                                          dc(dc),
-                                                                                         cont(cont),
+                                                                                         cont1(cont1),
+                                                                                         cont2(cont2),
                                                                                          apm(apm),
                                                                                          gfdb(gfdb),
-                                                                                         can(can) {
+                                                                                         can(can),
+                                                                                         spi(spi) {
     state = State::MC_OFF;
     prevState = State::MC_OFF;
 
@@ -28,12 +30,12 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     batteryOneOkStatus = IO::GPIO::State::LOW;
     batteryTwoOkStatus = IO::GPIO::State::LOW;
     eStopActiveStatus = IO::GPIO::State::HIGH;
-    forwardStatus = IO::GPIO::State::LOW;
+    // forwardStatus = IO::GPIO::State::LOW;
     pcStatus = IO::GPIO::State::LOW;
     dcStatus = IO::GPIO::State::LOW;
-    contStatus = IO::GPIO::State::LOW;
+    cont1Status = IO::GPIO::State::LOW;
+    cont2Status = IO::GPIO::State::LOW;
     apmStatus = IO::GPIO::State::LOW;
-    forwardStatus = IO::GPIO::State::LOW;
 
     gfdStatus = 0;
 }
@@ -107,6 +109,28 @@ void PreCharge::getSTO() {
     }
 }
 
+int PreCharge::getPrechargeStatus() {
+    PrechargeStatus status = PrechargeStatus::ERROR;
+    float expected_voltage = solveForVoltage();
+    uint8_t measured_voltage;
+    spi.read(&measured_voltage, 8);
+
+    if (measured_voltage >= (expected_voltage + 1.0) && measured_voltage <= (expected_voltage - 1.0)) {
+        if (measured_voltage >= (PACK_VOLTAGE + 1.0) && measured_voltage <= (PACK_VOLTAGE - 1.0)) {
+            status = PrechargeStatus::DONE;
+        } else {
+            status = PrechargeStatus::OK;
+        }
+    }
+
+    return static_cast<int>(status);
+}
+
+float PreCharge::solveForVoltage() {
+    uint32_t t = time::millis() - state_start_time;
+    return (PACK_VOLTAGE * (1 - CONST_E * (-(t / (CONST_R * CONST_C)))));
+}
+
 void PreCharge::getMCKey() {
     keyInStatus = key.readPin();
 }
@@ -114,7 +138,8 @@ void PreCharge::getMCKey() {
 void PreCharge::getIOStatus() {
     pcStatus = pc.readPin();
     dcStatus = dc.readPin();
-    contStatus = cont.readPin();
+    cont1Status = cont1.readPin();
+    cont2Status = cont2.readPin();
     apmStatus = apm.readPin();
 //    forwardStatus = forward.readPin();
 }
@@ -136,10 +161,15 @@ void PreCharge::setDischarge(PreCharge::PinStatus state) {
 }
 
 void PreCharge::setContactor(PreCharge::PinStatus state) {
-    if (static_cast<uint8_t>(state)) {
-        cont.writePin(IO::GPIO::State::HIGH);
+    if (state == PinStatus::ENABLE) {
+        cont1.writePin(IO::GPIO::State::HIGH);
+        cont2.writePin(IO::GPIO::State::LOW);
+    } else if (state == PinStatus::DISABLE) {
+        cont1.writePin(IO::GPIO::State::LOW);
+        cont2.writePin(IO::GPIO::State::HIGH);
     } else {
-        cont.writePin(IO::GPIO::State::LOW);
+        cont1.writePin(IO::GPIO::State::LOW);
+        cont2.writePin(IO::GPIO::State::LOW);
     }
 }
 
@@ -151,15 +181,16 @@ void PreCharge::setAPM(PreCharge::PinStatus state) {
     }
 }
 
-void PreCharge::setForward(PreCharge::PinStatus state) {
+// void PreCharge::setForward(PreCharge::PinStatus state) {
 //    if (static_cast<uint8_t>(state)) {
 //        forward.writePin(IO::GPIO::State::HIGH);
 //    } else {
 //        forward.writePin(IO::GPIO::State::LOW);
 //    }
-}
+// }
 
 void PreCharge::mcOffState() {
+    setContactor(PreCharge::PinStatus::HOLD);
     if (stoStatus == IO::GPIO::State::LOW) {
         state = State::ESTOPWAIT;
         if (prevState != state) {
@@ -178,6 +209,7 @@ void PreCharge::mcOffState() {
 }
 
 void PreCharge::mcOnState() {
+    setContactor(PreCharge::PinStatus::HOLD);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
         state_start_time = time::millis();
@@ -205,13 +237,13 @@ void PreCharge::prechargeState() {
     if (prevState != state) {
         sendChangePDO();
     }
-    if ((time::millis() - state_start_time) > PRECHARGE_DELAY) {
-        setPrecharge(PreCharge::PinStatus::DISABLE);
-        if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
-            state = State::CONT_OPEN;
-        } else {
-            state = State::CONT_CLOSE;
-        }
+    int precharging = getPrechargeStatus();
+
+    // Stay in prechargeState until DONE unless ERROR
+    if (precharging == static_cast<int>(PrechargeStatus::ERROR) || stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
+        state = State::CONT_OPEN;
+    } else if (precharging == static_cast<int>(PrechargeStatus::DONE)) {
+        state = State::CONT_CLOSE;
     }
     prevState = state;
 }
@@ -241,9 +273,10 @@ void PreCharge::contOpenState() {
 
 void PreCharge::contCloseState() {
     setContactor(PreCharge::PinStatus::ENABLE);
-    setForward(PreCharge::PinStatus::ENABLE);
+    setPrecharge(PreCharge::PinStatus::DISABLE);
+    // setForward(PreCharge::PinStatus::ENABLE);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
-        state = State::CONT_OPEN;
+        state = State::FORWARD_DISABLE;
     } else if (stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {
         setAPM(PreCharge::PinStatus::ENABLE);
 
@@ -261,7 +294,7 @@ void PreCharge::contCloseState() {
 }
 
 void PreCharge::forwardDisableState() {
-    setForward(PreCharge::PinStatus::DISABLE);
+    // setForward(PreCharge::PinStatus::DISABLE);
     if ((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
         setAPM(PreCharge::PinStatus::DISABLE);
 
@@ -292,15 +325,15 @@ void PreCharge::sendChangePDO() {
         0x00,
         static_cast<unsigned short>(keyInStatus) << 4 | static_cast<unsigned short>(stoStatus),
         static_cast<unsigned short>(batteryOneOkStatus) << 4 | static_cast<unsigned short>(batteryTwoOkStatus),
-        static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(forwardStatus),
+        static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(apmStatus),
         static_cast<unsigned short>(pcStatus) << 4 | static_cast<unsigned short>(dcStatus),
-        static_cast<unsigned short>(contStatus) << 4 | static_cast<unsigned short>(apmStatus),
+        static_cast<unsigned short>(cont1Status) << 4 | static_cast<unsigned short>(cont2Status),
     };
     IO::CANMessage changePDOMessage(0x48A, 7, &payload[0], false);
     can.transmit(changePDOMessage);
 
     EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; f: %d, pc: %d, dc: %d, c: %d, apm: %d",
-                               state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, forwardStatus, pcStatus, dcStatus, contStatus, apmStatus);
+                               state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, cont1Status, cont2Status);
 }
 
 }// namespace PreCharge
