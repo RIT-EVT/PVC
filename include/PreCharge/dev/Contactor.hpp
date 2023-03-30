@@ -11,11 +11,14 @@ class Contactor {
 public:
     Contactor(IO::GPIO& cont1, IO::GPIO& cont2);
 
-    void setOpen(bool isOpen);
+    void setOpen(bool shouldOpen);
+
+    bool openState();
 
 private:
     IO::GPIO& cont1;
     IO::GPIO& cont2;
+    bool isOpen = false;
 };
 
 }

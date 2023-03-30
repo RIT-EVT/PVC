@@ -117,12 +117,14 @@ int main() {
     IO::GPIO& eStop = IO::getGPIO<PreCharge::PreCharge::ESTOP_IN_PIN>(IO::GPIO::Direction::INPUT);
     IO::GPIO& pc = IO::getGPIO<PreCharge::PreCharge::PC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
     IO::GPIO& dc = IO::getGPIO<PreCharge::PreCharge::DC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& cont1 = IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& cont2 = IO::getGPIO<PreCharge::PreCharge::CONT2_PIN>(IO::GPIO::Direction::OUTPUT);
+    PreCharge::Contactor cont(
+        IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>(IO::GPIO::Direction::OUTPUT),
+            IO::getGPIO<PreCharge::PreCharge::CONT2_PIN>(IO::GPIO::Direction::OUTPUT)
+                );
     IO::GPIO& apm = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
 //    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
-    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont1, cont2, apm, gfdb, can, spi);
+    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can, spi);
 
     ///////////////////////////////////////////////////////////////////////////
     // Setup CAN configuration, this handles making drivers, applying settings.
@@ -170,8 +172,6 @@ int main() {
 //    forward.writePin(IO::GPIO::State::LOW);
     pc.writePin(IO::GPIO::State::LOW);
     dc.writePin(IO::GPIO::State::LOW);
-    cont1.writePin(IO::GPIO::State::LOW);
-    cont2.writePin(IO::GPIO::State::LOW);
 
     while (1) {
         precharge.handle();//update state machine

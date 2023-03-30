@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PreCharge/dev/Contactor.hpp"
 #include <Canopen/co_core.h>
 #include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
@@ -111,8 +112,7 @@ public:
      * @param[in] eStop GPIO for motorcycle e-stop
      * @param[in] pc GPIO for precharge contactor
      * @param[in] dc GPIO for discharge contactor
-     * @param[in] cont1 GPIO for main contactor
-     * @param[in] cont2 GPIO for main contactor
+     * @param[in] cont Driver for main contactor
      * @param[in] apm GPIO for apm control
      * @param[in] forward GPIO for forward enable
      * @param[in] gfdb GPIO for gfdb fault signal
@@ -120,8 +120,8 @@ public:
      * @param[in] spi spi instance for precharge  voltage monitoring
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont1,
-              IO::GPIO& cont2, IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, IO::SPI& spi);
+              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, IO::SPI& spi);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -184,13 +184,6 @@ public:
      * @param state 0 = discharge disabled, 1 = discharge enabled
      */
     void setDischarge(PinStatus state);
-
-    /**
-     * Toggle the state of the Main Contactor
-     * 
-     * @param state 0 = contactor open, 1 = contactor closed
-     */
-    void setContactor(PinStatus state);
 
     /**
      * Set the Forward state
@@ -289,10 +282,8 @@ private:
     IO::GPIO& pc;
     /** GPIO instance to toggle DC_CTL */
     IO::GPIO& dc;
-    /** GPIO instance to toggle CONT1_CTL */
-    IO::GPIO& cont1;
-    /** GPIO instance to toggle CONT2_CTL */
-    IO::GPIO& cont2;
+    /** Contactor instance to control the main contactor */
+    Contactor cont;
     /** GPIO instance to toggle APM_CTL */
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
@@ -311,8 +302,7 @@ private:
     IO::GPIO::State eStopActiveStatus;
     IO::GPIO::State pcStatus;
     IO::GPIO::State dcStatus;
-    IO::GPIO::State cont1Status;
-    IO::GPIO::State cont2Status;
+    uint8_t contStatus;
     IO::GPIO::State apmStatus;
     // IO::GPIO::State forwardStatus;
 
