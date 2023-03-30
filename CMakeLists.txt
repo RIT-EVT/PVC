@@ -5,6 +5,8 @@ if(EVT_CORE_LOG_ENABLE)
     add_compile_definitions(EVT_CORE_LOG_ENABLE)
 endif()
 
+add_compile_definitions(USE_HAL_DRIVER)
+
 ###############################################################################
 # Top level CMakeList for building the EVT pre-charge source code
 ###############################################################################
@@ -42,6 +44,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/PreCharge/PreCharge.cpp
         src/PreCharge/GFDB.cpp
         src/PreCharge/dev/MAX22530.cpp
+        src/PreCharge/dev/Contactor.cpp
         )
 
 ###############################################################################
