@@ -10,7 +10,7 @@ namespace PreCharge {
 
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                      IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-                     IO::GPIO& apm,  GFDB::GFDB& gfdb, IO::CAN& can, IO::SPI& spi) : key(key),
+                     IO::GPIO& apm,  GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX) : key(key),
                                                                                     batteryOne(batteryOne),
                                                                                     batteryTwo(batteryTwo),
                                                                                     eStop(eStop),
@@ -20,7 +20,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                                                                                     apm(apm),
                                                                                     gfdb(gfdb),
                                                                                     can(can),
-                                                                                    spi(spi) {
+                                                                                    MAX(MAX) {
     state = State::MC_OFF;
     prevState = State::MC_OFF;
 
@@ -36,9 +36,11 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     apmStatus = IO::GPIO::State::LOW;
 
     gfdStatus = 0;
+
+    cycle_key = 0;
 }
 
-void PreCharge::handle() {
+void PreCharge::handle(IO::UART& uart) {
     getSTO();     //update value of STO
     getMCKey();   //update value of MC_KEY_IN
     getIOStatus();//update value of IOStatus
@@ -50,6 +52,8 @@ void PreCharge::handle() {
 
     cyclicPDO = (InputVoltage << 32) | (OutputVoltage << 16) | BasePTemp;
 
+    // uart.printf("State: %d\r\n", static_cast<int>(state));
+
     switch (state) {
     case PreCharge::State::MC_OFF:
         mcOffState();
@@ -58,7 +62,7 @@ void PreCharge::handle() {
         eStopState();
         break;
     case PreCharge::State::PRECHARGE:
-        prechargeState();
+        prechargeState(uart);
         break;
     case PreCharge::State::CONT_CLOSE:
         contCloseState();
@@ -81,14 +85,14 @@ void PreCharge::handle() {
 }
 
 void PreCharge::getSTO() {
-    uint8_t gfdBuffer;
-    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
-    //GFDB messages gotten from datasheet. 00 = no error, 10 = warning, 11 = error
-    if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
-        gfdStatus = 0;
-    } else if (gfdBuffer == 0b11) {
-        gfdStatus = 1;
-    }
+    // uint8_t gfdBuffer;
+    // IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
+    // //GFDB messages gotten from datasheet. 00 = no error, 10 = warning, 11 = error
+    // if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
+    //     gfdStatus = 0;
+    // } else if (gfdBuffer == 0b11) {
+    //     gfdStatus = 1;
+    // }
 
     batteryOneOkStatus = batteryOne.readPin();
     batteryTwoOkStatus = batteryTwo.readPin();
@@ -107,30 +111,66 @@ void PreCharge::getSTO() {
     }
 }
 
-int PreCharge::getPrechargeStatus() {
-    PrechargeStatus status = PrechargeStatus::ERROR;
-    float expected_voltage = solveForVoltage();
-    uint8_t measured_voltage;
-    spi.read(&measured_voltage, 8);
+int PreCharge::getPrechargeStatus(IO::UART& uart) {
+    PrechargeStatus status;
+    static uint64_t delta_time;
+    uint16_t pack_voltage;
+    uint16_t measured_voltage;
+    uint16_t expected_voltage;
 
-    if (measured_voltage >= (expected_voltage + 1.0) && measured_voltage <= (expected_voltage - 1.0)) {
-        if (measured_voltage >= (PACK_VOLTAGE + 1.0) && measured_voltage <= (PACK_VOLTAGE - 1.0)) {
+    if (in_precharge == 0) {
+        state_start_time = time::millis();
+        in_precharge = 1;
+        delta_time = time::millis() - state_start_time;
+        status = PrechargeStatus::OK;
+        pack_voltage = MAX.readVoltage(0x02);
+        uart.printf("Pack: %d\r\n", pack_voltage);
+        measured_voltage = MAX.readVoltage(0x01);
+        expected_voltage = solveForVoltage((pack_voltage - measured_voltage), delta_time);
+        uart.printf("Expected: %d\r\n", static_cast<int>(expected_voltage));
+        uart.printf("Measured: %d\r\n", measured_voltage);
+    } else {
+        delta_time = time::millis() - state_start_time;
+        status = PrechargeStatus::OK;
+        pack_voltage = MAX.readVoltage(0x02);
+        uart.printf("Pack: %d\r\n", pack_voltage);
+        expected_voltage = solveForVoltage(pack_voltage, delta_time);
+        uart.printf("Expected: %d\r\n", static_cast<int>(expected_voltage));
+        measured_voltage = MAX.readVoltage(0x01);
+        uart.printf("Measured: %d\r\n", measured_voltage);
+    }
+
+    if (measured_voltage >= (expected_voltage - 5) && measured_voltage <= (expected_voltage + 5)) {
+        if (measured_voltage >= (pack_voltage - 1) && measured_voltage <= (pack_voltage + 1)) {
             status = PrechargeStatus::DONE;
+            in_precharge = 0;
         } else {
             status = PrechargeStatus::OK;
         }
+    } else {
+        status = PrechargeStatus::ERROR;
+        cycle_key = 1;
+        in_precharge = 0;
     }
 
     return static_cast<int>(status);
+    // return static_cast<int>(PrechargeStatus::DONE);
 }
 
-float PreCharge::solveForVoltage() {
-    uint32_t t = time::millis() - state_start_time;
-    return (PACK_VOLTAGE * (1 - CONST_E * (-(t / (CONST_R * CONST_C)))));
+uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
+    return (pack_voltage * (1 - exp(-(delta_time / (1000 * 30 * 0.014)))));
 }
 
 void PreCharge::getMCKey() {
-    keyInStatus = key.readPin();
+    if (cycle_key) {
+        if (key.readPin() == IO::GPIO::State::LOW) {
+            cycle_key = 0;
+        } else {
+            keyInStatus = IO::GPIO::State::LOW;
+        }
+    } else {
+        keyInStatus = key.readPin();
+    }
 }
 
 void PreCharge::getIOStatus() {
@@ -174,6 +214,7 @@ void PreCharge::setAPM(PreCharge::PinStatus state) {
 // }
 
 void PreCharge::mcOffState() {
+    in_precharge = 0;
     if (stoStatus == IO::GPIO::State::LOW) {
         state = State::ESTOPWAIT;
         if (prevState != state) {
@@ -194,7 +235,6 @@ void PreCharge::mcOffState() {
 void PreCharge::mcOnState() {
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
-        state_start_time = time::millis();
         if (prevState != state) {
             sendChangePDO();
         }
@@ -214,16 +254,17 @@ void PreCharge::eStopState() {
     //else stay on E-Stop
 }
 
-void PreCharge::prechargeState() {
+void PreCharge::prechargeState(IO::UART& uart) {
     setPrecharge(PreCharge::PinStatus::ENABLE);
     if (prevState != state) {
         sendChangePDO();
     }
-    int precharging = getPrechargeStatus();
+    int precharging = getPrechargeStatus(uart);
 
+    uart.printf("Precharging Status: %d\r\n", precharging);
     // Stay in prechargeState until DONE unless ERROR
     if (precharging == static_cast<int>(PrechargeStatus::ERROR) || stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
-        state = State::CONT_OPEN;
+        state = State::FORWARD_DISABLE;
     } else if (precharging == static_cast<int>(PrechargeStatus::DONE)) {
         state = State::CONT_CLOSE;
     }
@@ -277,6 +318,7 @@ void PreCharge::contCloseState() {
 
 void PreCharge::forwardDisableState() {
     // setForward(PreCharge::PinStatus::DISABLE);
+    setPrecharge(PreCharge::PinStatus::DISABLE);
     if ((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
         setAPM(PreCharge::PinStatus::DISABLE);
 

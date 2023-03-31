@@ -5,8 +5,12 @@
 #include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
 #include <EVT/io/SPI.hpp>
+#include <EVT/io/UART.hpp>
 #include <EVT/io/pin.hpp>
 #include <PreCharge/GFDB.hpp>
+#include <PreCharge/dev/MAX22530.hpp>
+
+#include <math.h>
 
 namespace IO = EVT::core::IO;
 
@@ -83,8 +87,6 @@ public:
     static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
 
-    static constexpr uint16_t PACK_VOLTAGE = 96; // 96V Pack
-    static constexpr float CONST_E = 2.71828;
     static constexpr uint8_t CONST_R = 30;
     static constexpr float CONST_C = 0.014;
 
@@ -92,7 +94,7 @@ public:
      * Number of attempts that will be made to check the STO status
      * before failing
      */
-    static constexpr uint16_t MAX_STO_ATTEMPTS = 50;
+    static constexpr uint16_t MAX_STO_ATTEMPTS = 25;
 
     /**
      * Utility variable which can be used to count the number of attempts that
@@ -117,11 +119,10 @@ public:
      * @param[in] forward GPIO for forward enable
      * @param[in] gfdb GPIO for gfdb fault signal
      * @param[in] can can instance for CANopen
-     * @param[in] spi spi instance for precharge  voltage monitoring
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, IO::SPI& spi);
+              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -131,7 +132,7 @@ public:
     /**
      * Handler running the pre-charge state switching
      */
-    void handle();
+    void handle(IO::UART& uart);
 
     /**
     * Get the value of STO (Safe to Operate)
@@ -151,14 +152,14 @@ public:
      * 
      * @return int value of PrechargeStatus enum
     */
-    int getPrechargeStatus();
+    int getPrechargeStatus(IO::UART& uart);
 
     /**
      * Get the current expected voltage based on the current precharge time
      * 
      * @return float value of expected voltage in Volts
     */
-    float solveForVoltage();
+    uint16_t solveForVoltage(uint16_t pack_voltage, uint64_t delta_time);
 
     /**
      * Get the state of MC_KEY_IN
@@ -225,7 +226,7 @@ public:
      * 
      * State: State::PRECHARGE
      */
-    void prechargeState();
+    void prechargeState(IO::UART& uart);
 
     /**
      * Handles when discharge is to occur.
@@ -292,8 +293,8 @@ private:
     GFDB::GFDB& gfdb;
     /** CAN instance to handle CANOpen processes*/
     IO::CAN& can;
-    /** SPI instance to handle precharge voltage monitoring*/
-    IO::SPI& spi;
+
+    MAX22530 MAX;
 
     IO::GPIO::State keyInStatus;
     IO::GPIO::State stoStatus;
@@ -308,9 +309,14 @@ private:
 
     uint8_t gfdStatus;
 
+    // Status bit to indicate a precharge error
+    // Key must be cycled (on->off->on) to resume state machine
+    uint8_t cycle_key;
+
     State state;
     State prevState;
     uint64_t state_start_time;
+    int in_precharge;
 
     /**
      * Handles the sending of a CAN message upon each state change.
