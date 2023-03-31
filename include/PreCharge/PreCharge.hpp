@@ -75,6 +75,13 @@ public:
         ERROR = 2u
     };
 
+    enum class PVCStatus {
+        PVC_OK = 0u,
+        PVC_ERROR = 1u
+    };
+
+    static PVCStatus pvcStatus;
+
     uint8_t Statusword;//8
 
     uint64_t InputVoltage; //16
@@ -132,7 +139,7 @@ public:
     /**
      * Handler running the pre-charge state switching
      */
-    void handle(IO::UART& uart);
+    PVCStatus handle(IO::UART& uart);
 
     /**
     * Get the value of STO (Safe to Operate)
@@ -185,13 +192,6 @@ public:
      * @param state 0 = discharge disabled, 1 = discharge enabled
      */
     void setDischarge(PinStatus state);
-
-    /**
-     * Set the Forward state
-     * 
-     * @param state 0 = forward disabled, 1 = forward enabled
-     */
-    // void setForward(PinStatus state);
 
     /**
      * Set the APM state
@@ -305,7 +305,6 @@ private:
     IO::GPIO::State dcStatus;
     uint8_t contStatus;
     IO::GPIO::State apmStatus;
-    // IO::GPIO::State forwardStatus;
 
     uint8_t gfdStatus;
 

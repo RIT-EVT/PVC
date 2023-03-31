@@ -29,7 +29,6 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     batteryOneOkStatus = IO::GPIO::State::LOW;
     batteryTwoOkStatus = IO::GPIO::State::LOW;
     eStopActiveStatus = IO::GPIO::State::HIGH;
-    // forwardStatus = IO::GPIO::State::LOW;
     pcStatus = IO::GPIO::State::LOW;
     dcStatus = IO::GPIO::State::LOW;
     contStatus = 0;
@@ -40,7 +39,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     cycle_key = 0;
 }
 
-void PreCharge::handle(IO::UART& uart) {
+PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
     getSTO();     //update value of STO
     getMCKey();   //update value of MC_KEY_IN
     getIOStatus();//update value of IOStatus
@@ -51,8 +50,6 @@ void PreCharge::handle(IO::UART& uart) {
     BasePTemp = 0;    //Does not exist yet
 
     cyclicPDO = (InputVoltage << 32) | (OutputVoltage << 16) | BasePTemp;
-
-    // uart.printf("State: %d\r\n", static_cast<int>(state));
 
     switch (state) {
     case PreCharge::State::MC_OFF:
@@ -82,6 +79,12 @@ void PreCharge::handle(IO::UART& uart) {
     default:
         break;
     }
+
+    if (cycle_key) {
+        return PVCStatus::PVC_ERROR;
+    } else {
+        return PVCStatus::PVC_OK;
+    }
 }
 
 void PreCharge::getSTO() {
@@ -102,6 +105,7 @@ void PreCharge::getSTO() {
         stoStatus = IO::GPIO::State::HIGH;
     } else {
         if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+            cycle_key = 1;
             stoStatus = IO::GPIO::State::LOW;
             numAttemptsMade = 0;
             return;
@@ -154,7 +158,6 @@ int PreCharge::getPrechargeStatus(IO::UART& uart) {
     }
 
     return static_cast<int>(status);
-    // return static_cast<int>(PrechargeStatus::DONE);
 }
 
 uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
@@ -178,7 +181,6 @@ void PreCharge::getIOStatus() {
     dcStatus = dc.readPin();
     contStatus = cont.openState();
     apmStatus = apm.readPin();
-//    forwardStatus = forward.readPin();
 }
 
 void PreCharge::setPrecharge(PreCharge::PinStatus state) {
@@ -204,14 +206,6 @@ void PreCharge::setAPM(PreCharge::PinStatus state) {
         apm.writePin(IO::GPIO::State::LOW);
     }
 }
-
-// void PreCharge::setForward(PreCharge::PinStatus state) {
-//    if (static_cast<uint8_t>(state)) {
-//        forward.writePin(IO::GPIO::State::HIGH);
-//    } else {
-//        forward.writePin(IO::GPIO::State::LOW);
-//    }
-// }
 
 void PreCharge::mcOffState() {
     in_precharge = 0;
@@ -297,7 +291,6 @@ void PreCharge::contOpenState() {
 void PreCharge::contCloseState() {
     cont.setOpen(false);
     setPrecharge(PreCharge::PinStatus::DISABLE);
-    // setForward(PreCharge::PinStatus::ENABLE);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
     } else if (stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {
@@ -317,7 +310,6 @@ void PreCharge::contCloseState() {
 }
 
 void PreCharge::forwardDisableState() {
-    // setForward(PreCharge::PinStatus::DISABLE);
     setPrecharge(PreCharge::PinStatus::DISABLE);
     if ((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
         setAPM(PreCharge::PinStatus::DISABLE);

@@ -1,5 +1,5 @@
 /**
- * This is the primary State machine handler for the pre-charge board
+ * This is the primary State machine handler for the pre-charge voltage controller (PVC) board
  */
 
 #include <EVT/io/CANopen.hpp>
@@ -174,8 +174,18 @@ int main() {
     pc.writePin(IO::GPIO::State::LOW);
     dc.writePin(IO::GPIO::State::LOW);
 
+    PreCharge::PreCharge::PVCStatus status = PreCharge::PreCharge::PVCStatus::PVC_OK;
+
     while (1) {
-        precharge.handle(uart);//update state machine
+        PreCharge::PreCharge::PVCStatus current_status = precharge.handle(uart); // Update state machine
+
+        if (current_status == PreCharge::PreCharge::PVCStatus::PVC_ERROR) {
+            status = PreCharge::PreCharge::PVCStatus::PVC_ERROR;
+            CONmtSetMode(&canNode.Nmt, CO_PREOP);
+        } else if (status == PreCharge::PreCharge::PVCStatus::PVC_ERROR && current_status == PreCharge::PreCharge::PVCStatus::PVC_OK) {
+            status = PreCharge::PreCharge::PVCStatus::PVC_OK;
+            CONmtSetMode(&canNode.Nmt, CO_OPERATIONAL);
+        }
 
         // Process incoming CAN messages
         CONodeProcess(&canNode);

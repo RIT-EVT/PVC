@@ -7,6 +7,7 @@
 #include <EVT/io/pin.hpp>
 #include <EVT/utils/log.hpp>
 #include <PreCharge/dev/MAX22530.hpp>
+#include <PreCharge/PreCharge.hpp>
 
 namespace IO = EVT::core::IO;
 namespace DEV = EVT::core::DEV;
