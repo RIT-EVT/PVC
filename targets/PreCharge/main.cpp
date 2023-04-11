@@ -22,6 +22,11 @@ namespace time = EVT::core::time;
 // aside CANopen messages into a specific queue
 ///////////////////////////////////////////////////////////////////////////////
 
+typedef struct CanStruct {
+    EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage>* queue;
+    IO::CANf3xx* can;
+} CanStruct;
+
 /**
  * Interrupt handler to get CAN messages. A function pointer to this function
  * will be passed to the EVT-core CAN interface which will in turn call this
@@ -33,10 +38,16 @@ namespace time = EVT::core::time;
  * @param message[in] The passed in CAN message that was read.
  */
 void canInterruptHandler(IO::CANMessage& message, void* priv) {
-    EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage>* queue =
-        (EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage>*) priv;
-    if (queue != nullptr)
-        queue->append(message);
+    auto* canStruct = (CanStruct*) priv;
+    if (message.isCANExtended()) {
+        if (canStruct != nullptr && canStruct->can != nullptr) {
+            canStruct->can->addCANMessage(message);
+        }
+    } else {
+       if (canStruct != nullptr && canStruct->queue != nullptr) {
+           canStruct->queue->append(message);
+       }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,7 +90,11 @@ int main() {
 
     // Initialize CAN, add an IRQ that will populate the above queue
     IO::CAN& can = IO::getCAN<PreCharge::PreCharge::CAN_TX_PIN, PreCharge::PreCharge::CAN_RX_PIN>();
-    can.addIRQHandler(canInterruptHandler, reinterpret_cast<void*>(&canOpenQueue));
+    CanStruct canStruct = {
+        .queue = &canOpenQueue,
+        .can = static_cast<IO::CANf3xx*>(&can),
+    };
+    can.addIRQHandler(canInterruptHandler, reinterpret_cast<void*>(&canStruct));
 
     // Initialize MAX22530 and SPI
     IO::GPIO* CSPins[1];

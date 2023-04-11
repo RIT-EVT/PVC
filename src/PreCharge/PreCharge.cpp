@@ -88,20 +88,23 @@ PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
 }
 
 void PreCharge::getSTO() {
-    // uint8_t gfdBuffer;
-    // IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
-    // //GFDB messages gotten from datasheet. 00 = no error, 10 = warning, 11 = error
-    // if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
-    //     gfdStatus = 0;
-    // } else if (gfdBuffer == 0b11) {
-    //     gfdStatus = 1;
-    // }
+     uint8_t gfdBuffer;
+     IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
+     //GFDB messages gotten from datasheet. 00 = no error, 10 = warning, 11 = error
+     if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
+         gfdStatus = 0;
+     } else if (gfdBuffer == 0b11) {
+         gfdStatus = 1;
+     }
 
     batteryOneOkStatus = batteryOne.readPin();
     batteryTwoOkStatus = batteryTwo.readPin();
     eStopActiveStatus = eStop.readPin();
 
-    if (batteryOneOkStatus == IO::GPIO::State::HIGH && batteryTwoOkStatus == IO::GPIO::State::HIGH && eStopActiveStatus == IO::GPIO::State::HIGH) {
+    if (batteryOneOkStatus == IO::GPIO::State::HIGH
+        && batteryTwoOkStatus == IO::GPIO::State::HIGH
+        && eStopActiveStatus == IO::GPIO::State::HIGH
+        && !gfdStatus) {
         stoStatus = IO::GPIO::State::HIGH;
     } else {
         if (numAttemptsMade > MAX_STO_ATTEMPTS) {
@@ -289,6 +292,11 @@ void PreCharge::contOpenState() {
 }
 
 void PreCharge::contCloseState() {
+    if (prevState != state) {
+        sendChangePDO();
+    }
+    prevState = state;
+
     cont.setOpen(false);
     setPrecharge(PreCharge::PinStatus::DISABLE);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
@@ -303,10 +311,6 @@ void PreCharge::contCloseState() {
 
         state = State::MC_ON;
     }
-    if (prevState != state) {
-        sendChangePDO();
-    }
-    prevState = state;
 }
 
 void PreCharge::forwardDisableState() {

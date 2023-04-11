@@ -28,18 +28,27 @@ IO::CAN::CANStatus GFDB::requestVoltageNegativeHighRes(int32_t* highRes) {
 }
 
 IO::CAN::CANStatus GFDB::requestTemp(int32_t* temperature) {
-    uint8_t tempBuffer[4] = {};
+    uint8_t tempBuffer[5] = {};
 
-    IO::CAN::CANStatus result = requestData(TEMP_REQ_CMD, tempBuffer, 4);
-    if (result == IO::CAN::CANStatus::ERROR)
+    IO::CAN::CANStatus result = requestData(TEMP_REQ_CMD, tempBuffer, 5);
+    if (result == IO::CAN::CANStatus::ERROR) {
         return result;
+    }
 
-    *temperature = (tempBuffer[0] << 24) | (tempBuffer[1] << 16) | (tempBuffer[2] << 8) | tempBuffer[3];
-    return IO::CAN::CANStatus::OK;
+    *temperature = (tempBuffer[1] << 24) | (tempBuffer[2] << 16) | (tempBuffer[3] << 8) | tempBuffer[4];
+    return result;
 }
 
 IO::CAN::CANStatus GFDB::requestIsolationState(uint8_t* isoState) {
-    return requestData(ISO_STATE_REQ_CMD, isoState, 8);
+    uint8_t buf[8];
+
+    IO::CAN::CANStatus result = requestData(ISO_STATE_REQ_CMD, buf, 8);
+    if (result != IO::CAN::CANStatus::OK) {
+        return result;
+    }
+
+    *isoState = buf[1] & 0x03;
+    return result;
 }
 
 IO::CAN::CANStatus GFDB::requestIsolationResistances(uint8_t* resistances) {
@@ -97,21 +106,43 @@ IO::CAN::CANStatus GFDB::setMaxBatteryVoltage(uint16_t maxVoltage) {
     return sendCommand(SET_MAX_VOLTAGE_CMD, payload, 4);
 }
 
-IO::CAN::CANStatus GFDB::requestData(uint8_t command, uint8_t* receiveBuff, size_t receiveSize) {
+IO::CAN::CANStatus GFDB::requestData(uint8_t command, uint8_t* receiveBuff, uint8_t receiveSize) {
     IO::CANMessage txMessage(GFDB_ID, 1, &command, true);
-    IO::CANMessage rxMessage(GFDB_ID, receiveSize, receiveBuff, true);
 
-    IO::CAN::CANStatus result = can.transmit(txMessage);
-    if (result == IO::CAN::CANStatus::ERROR)
-        return result;
+    IO::CAN::CANStatus result;
+    IO::CANMessage rxMessage;
 
-    result = can.receive(&rxMessage, false);
+    for (uint8_t i = 0; i < 10; i++) {
+        result = can.transmit(txMessage);
+        if (result == IO::CAN::CANStatus::ERROR)
+            return result;
+
+        result = can.receive(&rxMessage, false);
+
+        if (result != IO::CAN::CANStatus::OK) {
+            return result;
+        }
+
+        if (rxMessage.getPayload()[0] == command) {
+            break;
+        }
+    }
+
+    if (rxMessage.getPayload()[0] != command) {
+        return IO::CAN::CANStatus::ERROR;
+    }
+
+    for (uint8_t i = 0; i < receiveSize; i++) {
+        receiveBuff[i] = rxMessage.getPayload()[i];
+    }
 
     return result;
 }
 
 IO::CAN::CANStatus GFDB::sendCommand(uint8_t command, uint8_t* payload, size_t payloadSize) {
+    // TODO: This line does not look like it functions as intended
     IO::CANMessage txMessage(GFDB_ID, payloadSize, &command, true);
     return can.transmit(txMessage);
 }
+
 };// namespace GFDB
