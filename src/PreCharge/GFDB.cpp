@@ -123,12 +123,12 @@ IO::CAN::CANStatus GFDB::requestData(uint8_t command, uint8_t* receiveBuff, uint
             return result;
         }
 
-        if (rxMessage.getPayload()[0] == command) {
+        if (rxMessage.getPayload()[0] == command && rxMessage.getId() == GFDB_ID - 1) {
             break;
         }
     }
 
-    if (rxMessage.getPayload()[0] != command) {
+    if (rxMessage.getPayload()[0] != command || rxMessage.getId() != GFDB_ID - 1) {
         return IO::CAN::CANStatus::ERROR;
     }
 
