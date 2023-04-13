@@ -94,6 +94,8 @@ public:
     static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
 
+    static constexpr uint8_t MIN_PACK_VOLTAGE = 70;
+
     static constexpr uint8_t CONST_R = 30;
     static constexpr float CONST_C = 0.014;
 
@@ -160,6 +162,11 @@ public:
      * @return int value of PrechargeStatus enum
     */
     int getPrechargeStatus(IO::UART& uart);
+
+    /**
+     * Requests and handles the isolation state from the SIM100
+    */
+    void checkGFDB();
 
     /**
      * Get the current expected voltage based on the current precharge time

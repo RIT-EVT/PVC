@@ -88,14 +88,7 @@ PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
 }
 
 void PreCharge::getSTO() {
-     uint8_t gfdBuffer;
-     IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
-     //GFDB messages gotten from datasheet. 00 = no error, 10 = warning, 11 = error
-     if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
-         gfdStatus = 0;
-     } else if (gfdBuffer == 0b11) {
-         gfdStatus = 1;
-     }
+    checkGFDB();
 
     batteryOneOkStatus = batteryOne.readPin();
     batteryTwoOkStatus = batteryTwo.readPin();
@@ -147,7 +140,7 @@ int PreCharge::getPrechargeStatus(IO::UART& uart) {
         uart.printf("Measured: %d\r\n", measured_voltage);
     }
 
-    if (measured_voltage >= (expected_voltage - 5) && measured_voltage <= (expected_voltage + 5)) {
+    if (measured_voltage >= (expected_voltage - 5) && measured_voltage <= (expected_voltage + 5) && pack_voltage > MIN_PACK_VOLTAGE) {
         if (measured_voltage >= (pack_voltage - 1) && measured_voltage <= (pack_voltage + 1)) {
             status = PrechargeStatus::DONE;
             in_precharge = 0;
@@ -161,6 +154,16 @@ int PreCharge::getPrechargeStatus(IO::UART& uart) {
     }
 
     return static_cast<int>(status);
+}
+
+void PreCharge::checkGFDB() {
+    uint8_t gfdBuffer[8] = {};
+
+    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(gfdBuffer);
+    //Error connecting to GFDB
+    if (gfdbConn == IO::CAN::CANStatus::ERROR) {
+        gfdStatus = 1;
+    }
 }
 
 uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
