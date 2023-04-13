@@ -256,6 +256,7 @@ void PreCharge::prechargeState(IO::UART& uart) {
     if (prevState != state) {
         sendChangePDO();
     }
+    prevState = state;
     int precharging = getPrechargeStatus(uart);
 
     uart.printf("Precharging Status: %d\r\n", precharging);
@@ -265,7 +266,6 @@ void PreCharge::prechargeState(IO::UART& uart) {
     } else if (precharging == static_cast<int>(PrechargeStatus::DONE)) {
         state = State::CONT_CLOSE;
     }
-    prevState = state;
 }
 
 void PreCharge::dischargeState() {
