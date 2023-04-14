@@ -161,7 +161,7 @@ public:
      * 
      * @return int value of PrechargeStatus enum
     */
-    int getPrechargeStatus(IO::UART& uart);
+    int getPrechargeStatus();
 
     /**
      * Requests and handles the isolation state from the SIM100
@@ -233,7 +233,7 @@ public:
      * 
      * State: State::PRECHARGE
      */
-    void prechargeState(IO::UART& uart);
+    void prechargeState();
 
     /**
      * Handles when discharge is to occur.
