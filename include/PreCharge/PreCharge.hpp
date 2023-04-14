@@ -112,7 +112,7 @@ public:
      * For example, this is used for checking the STO N
      * number of times before failing
      */
-    uint16_t numAttemptsMade;
+    uint16_t numAttemptsMade = 0;
 
     /**
      * Constructor for pre-charge state machine

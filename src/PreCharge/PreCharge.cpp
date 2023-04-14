@@ -37,6 +37,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     gfdStatus = 0;
 
     cycle_key = 0;
+    sendChangePDO();
 }
 
 PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
@@ -88,34 +89,59 @@ PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
 }
 
 void PreCharge::getSTO() {
-    uint8_t gfdBuffer;
-    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
-    //Error connecting to GFDB
-    if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
-        gfdStatus = 0;
-    } else if (gfdBuffer == 0b11) {
-        gfdStatus = 1;
+    if (in_precharge == 2) {
+        uint8_t gfdBuffer;
+        IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
+        //Error connecting to GFDB
+        if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
+            gfdStatus = 1;
+        } else if (gfdBuffer == 0b11) {
+            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Bad GFDB");
+            gfdStatus = 0;
+        }
     }
 
     batteryOneOkStatus = batteryOne.readPin();
     batteryTwoOkStatus = batteryTwo.readPin();
     eStopActiveStatus = eStop.readPin();
 
-    if (batteryOneOkStatus == IO::GPIO::State::HIGH
-        && batteryTwoOkStatus == IO::GPIO::State::HIGH
-        && eStopActiveStatus == IO::GPIO::State::HIGH
-        && !gfdStatus) {
-        stoStatus = IO::GPIO::State::HIGH;
-        numAttemptsMade = 0;
-    } else {
-        if (numAttemptsMade > MAX_STO_ATTEMPTS) {
-            cycle_key = 1;
-            stoStatus = IO::GPIO::State::LOW;
+    if (in_precharge == 2) {
+        if (batteryOneOkStatus == IO::GPIO::State::HIGH
+            && batteryTwoOkStatus == IO::GPIO::State::HIGH
+            && eStopActiveStatus == IO::GPIO::State::HIGH
+            && gfdStatus == 1) {
+            stoStatus = IO::GPIO::State::HIGH;
             numAttemptsMade = 0;
-            return;
-        }
+        } else {
+            if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                cycle_key = 1;
+                stoStatus = IO::GPIO::State::LOW;
+                numAttemptsMade = 0;
+                return;
+            }
+            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
 
-        numAttemptsMade++;
+            numAttemptsMade++;
+        }
+    } else {
+        if (batteryOneOkStatus == IO::GPIO::State::HIGH
+            && batteryTwoOkStatus == IO::GPIO::State::HIGH
+            && eStopActiveStatus == IO::GPIO::State::HIGH) {
+            stoStatus = IO::GPIO::State::HIGH;
+            numAttemptsMade = 0;
+        } else {
+            if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                cycle_key = 1;
+                stoStatus = IO::GPIO::State::LOW;
+                numAttemptsMade = 0;
+                return;
+            }
+            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
+
+            numAttemptsMade++;
+        }
     }
 }
 
@@ -145,7 +171,7 @@ int PreCharge::getPrechargeStatus() {
     if (measured_voltage >= (expected_voltage - 5) && measured_voltage <= (expected_voltage + 5) && pack_voltage > MIN_PACK_VOLTAGE) {
         if (measured_voltage >= (pack_voltage - 1) && measured_voltage <= (pack_voltage + 1)) {
             status = PrechargeStatus::DONE;
-            in_precharge = 0;
+            in_precharge = 2;
         } else {
             status = PrechargeStatus::OK;
         }
@@ -256,8 +282,10 @@ void PreCharge::prechargeState() {
 
     // Stay in prechargeState until DONE unless ERROR
     if (precharging == static_cast<int>(PrechargeStatus::ERROR) || stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Precharge error");
         state = State::FORWARD_DISABLE;
     } else if (precharging == static_cast<int>(PrechargeStatus::DONE)) {
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Precharge done");
         state = State::CONT_CLOSE;
     }
     if (prevState != state) {
