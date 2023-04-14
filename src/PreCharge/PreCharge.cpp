@@ -88,7 +88,14 @@ PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
 }
 
 void PreCharge::getSTO() {
-    checkGFDB();
+    uint8_t gfdBuffer;
+    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
+    //Error connecting to GFDB
+    if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
+        gfdStatus = 0;
+    } else if (gfdBuffer == 0b11) {
+        gfdStatus = 1;
+    }
 
     batteryOneOkStatus = batteryOne.readPin();
     batteryTwoOkStatus = batteryTwo.readPin();
@@ -152,14 +159,7 @@ int PreCharge::getPrechargeStatus() {
 }
 
 void PreCharge::checkGFDB() {
-    uint8_t gfdBuffer;
-    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
-    //Error connecting to GFDB
-    if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
-        gfdStatus = 0;
-    } else if (gfdBuffer == 0b11) {
-        gfdStatus = 1;
-    }
+
 }
 
 uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
