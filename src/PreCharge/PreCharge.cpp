@@ -59,7 +59,7 @@ PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
         eStopState();
         break;
     case PreCharge::State::PRECHARGE:
-        prechargeState(uart);
+        prechargeState();
         break;
     case PreCharge::State::CONT_CLOSE:
         contCloseState();
@@ -111,7 +111,7 @@ void PreCharge::getSTO() {
     }
 }
 
-int PreCharge::getPrechargeStatus(IO::UART& uart) {
+int PreCharge::getPrechargeStatus() {
     PrechargeStatus status;
     static uint64_t delta_time;
     uint16_t pack_voltage;
@@ -124,20 +124,14 @@ int PreCharge::getPrechargeStatus(IO::UART& uart) {
         delta_time = time::millis() - state_start_time;
         status = PrechargeStatus::OK;
         pack_voltage = MAX.readVoltage(0x02);
-        uart.printf("Pack: %d\r\n", pack_voltage);
         measured_voltage = MAX.readVoltage(0x01);
         expected_voltage = solveForVoltage((pack_voltage - measured_voltage), delta_time);
-        uart.printf("Expected: %d\r\n", static_cast<int>(expected_voltage));
-        uart.printf("Measured: %d\r\n", measured_voltage);
     } else {
         delta_time = time::millis() - state_start_time;
         status = PrechargeStatus::OK;
         pack_voltage = MAX.readVoltage(0x02);
-        uart.printf("Pack: %d\r\n", pack_voltage);
         expected_voltage = solveForVoltage(pack_voltage, delta_time);
-        uart.printf("Expected: %d\r\n", static_cast<int>(expected_voltage));
         measured_voltage = MAX.readVoltage(0x01);
-        uart.printf("Measured: %d\r\n", measured_voltage);
     }
 
     if (measured_voltage >= (expected_voltage - 5) && measured_voltage <= (expected_voltage + 5) && pack_voltage > MIN_PACK_VOLTAGE) {
@@ -157,11 +151,12 @@ int PreCharge::getPrechargeStatus(IO::UART& uart) {
 }
 
 void PreCharge::checkGFDB() {
-    uint8_t gfdBuffer[8] = {};
-
-    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(gfdBuffer);
+    uint8_t gfdBuffer;
+    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
     //Error connecting to GFDB
-    if (gfdbConn == IO::CAN::CANStatus::ERROR) {
+    if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
+        gfdStatus = 0;
+    } else if (gfdBuffer == 0b11) {
         gfdStatus = 1;
     }
 }
@@ -254,31 +249,30 @@ void PreCharge::eStopState() {
     //else stay on E-Stop
 }
 
-void PreCharge::prechargeState(IO::UART& uart) {
+void PreCharge::prechargeState() {
     setPrecharge(PreCharge::PinStatus::ENABLE);
-    if (prevState != state) {
-        sendChangePDO();
-    }
-    prevState = state;
-    int precharging = getPrechargeStatus(uart);
+    int precharging = getPrechargeStatus();
 
-    uart.printf("Precharging Status: %d\r\n", precharging);
     // Stay in prechargeState until DONE unless ERROR
     if (precharging == static_cast<int>(PrechargeStatus::ERROR) || stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
     } else if (precharging == static_cast<int>(PrechargeStatus::DONE)) {
         state = State::CONT_CLOSE;
     }
+    if (prevState != state) {
+        sendChangePDO();
+    }
+    prevState = state;
 }
 
 void PreCharge::dischargeState() {
     setDischarge(PreCharge::PinStatus::ENABLE);
-    if (prevState != state) {
-        sendChangePDO();
-    }
     if ((time::millis() - state_start_time) > DISCHARGE_DELAY) {
         setDischarge(PreCharge::PinStatus::DISABLE);
         state = State::MC_OFF;
+        sendChangePDO();
+    }
+    if (prevState != state) {
         sendChangePDO();
     }
     prevState = state;
@@ -295,11 +289,6 @@ void PreCharge::contOpenState() {
 }
 
 void PreCharge::contCloseState() {
-    if (prevState != state) {
-        sendChangePDO();
-    }
-    prevState = state;
-
     cont.setOpen(false);
     setPrecharge(PreCharge::PinStatus::DISABLE);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
@@ -314,6 +303,10 @@ void PreCharge::contCloseState() {
 
         state = State::MC_ON;
     }
+    if (prevState != state) {
+        sendChangePDO();
+    }
+    prevState = state;
 }
 
 void PreCharge::forwardDisableState() {
