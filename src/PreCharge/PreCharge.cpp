@@ -99,6 +99,7 @@ void PreCharge::getSTO() {
         && eStopActiveStatus == IO::GPIO::State::HIGH
         && !gfdStatus) {
         stoStatus = IO::GPIO::State::HIGH;
+        numAttemptsMade = 0;
     } else {
         if (numAttemptsMade > MAX_STO_ATTEMPTS) {
             cycle_key = 1;
