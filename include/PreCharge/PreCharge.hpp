@@ -424,7 +424,8 @@ private:
         {
             .Key = CO_KEY(0x1A00, 0, CO_UNSIGNED8 | CO_OBJ_D__R_),
             .Type = nullptr,
-            .Data = (uintptr_t) 1},
+            .Data = (uintptr_t) 1
+        },
         {
             .Key = CO_KEY(0x1A00, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
             .Type = nullptr,
@@ -437,6 +438,11 @@ private:
             .Key = CO_KEY(0x2100, 0, CO_UNSIGNED8 | CO_OBJ___PRW),
             .Type = nullptr,
             .Data = (uintptr_t) &state,
+        },
+        {
+            .Key = CO_KEY(0x1017, 0, CO_UNSIGNED16 | CO_OBJ_D__R_),
+            .Type = CO_THB_PROD,
+            .Data = (uintptr_t) 1000,
         },
 
         // End of dictionary marker
