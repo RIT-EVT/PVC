@@ -136,7 +136,7 @@ public:
     /**
      * The node ID used to identify the device on the CAN network.
      */
-    static constexpr uint8_t NODE_ID = 0x02;
+    static constexpr uint8_t NODE_ID = 0x10;
 
     /**
      * Handler running the pre-charge state switching
@@ -344,6 +344,13 @@ private:
     CO_OBJ_T objectDictionary[OBJECT_DICTIONARY_SIZE + 1] = {
         // Sync ID, defaults to 0x80
         {CO_KEY(0x1005, 0, CO_UNSIGNED32 | CO_OBJ_D__R_), nullptr, (uintptr_t) 0x80},
+
+        // Enable heartbeat
+        {
+            CO_KEY(0x1017, 0, CO_UNSIGNED16 | CO_OBJ_D__R_),
+            CO_THB_PROD,
+            (uintptr_t) 100,
+        },
 
         // Information about the hardware, hard coded sample values for now
         // 1: Vendor ID
