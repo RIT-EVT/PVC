@@ -314,6 +314,7 @@ private:
     IO::GPIO::State apmStatus;
 
     uint8_t gfdStatus;
+    uint32_t lastPrechargeTime;
 
     // Status bit to indicate a precharge error
     // Key must be cycled (on->off->on) to resume state machine

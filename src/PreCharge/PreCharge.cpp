@@ -89,7 +89,7 @@ PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
 }
 
 void PreCharge::getSTO() {
-    if (in_precharge == 2) {
+    if (in_precharge == 2 && time::millis() - lastPrechargeTime > 5000) {
         uint8_t gfdBuffer;
         IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
         //Error connecting to GFDB
@@ -170,12 +170,14 @@ int PreCharge::getPrechargeStatus() {
 
     if (measured_voltage >= (expected_voltage - 5) && measured_voltage <= (expected_voltage + 5) && pack_voltage > MIN_PACK_VOLTAGE) {
         if (measured_voltage >= (pack_voltage - 1) && measured_voltage <= (pack_voltage + 1)) {
+            lastPrechargeTime = time::millis();
             status = PrechargeStatus::DONE;
             in_precharge = 2;
         } else {
             status = PrechargeStatus::OK;
         }
     } else {
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "%d:%d, %d", measured_voltage, expected_voltage, pack_voltage);
         status = PrechargeStatus::ERROR;
         cycle_key = 1;
         in_precharge = 0;
