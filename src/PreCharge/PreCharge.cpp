@@ -186,10 +186,6 @@ int PreCharge::getPrechargeStatus() {
     return static_cast<int>(status);
 }
 
-void PreCharge::checkGFDB() {
-
-}
-
 uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
     return (pack_voltage * (1 - exp(-(delta_time / (1000 * 30 * 0.014)))));
 }
@@ -209,7 +205,6 @@ void PreCharge::getMCKey() {
 void PreCharge::getIOStatus() {
     pcStatus = pc.readPin();
     dcStatus = dc.readPin();
-    contStatus = cont.openState();
     apmStatus = apm.readPin();
 }
 
@@ -311,6 +306,7 @@ void PreCharge::dischargeState() {
 
 void PreCharge::contOpenState() {
     cont.setOpen(true);
+    contStatus = 0;
     state = State::DISCHARGE;
     state_start_time = time::millis();
     if (prevState != state) {
@@ -321,6 +317,7 @@ void PreCharge::contOpenState() {
 
 void PreCharge::contCloseState() {
     cont.setOpen(false);
+    contStatus = 1;
     setPrecharge(PreCharge::PinStatus::DISABLE);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
@@ -368,7 +365,7 @@ uint16_t PreCharge::getObjectDictionarySize() {
 
 void PreCharge::sendChangePDO() {
     uint8_t payload[] = {
-        Statusword,
+        static_cast<uint8_t>(state),
         0x00,
         static_cast<unsigned short>(keyInStatus) << 4 | static_cast<unsigned short>(stoStatus),
         static_cast<unsigned short>(batteryOneOkStatus) << 4 | static_cast<unsigned short>(batteryTwoOkStatus),
