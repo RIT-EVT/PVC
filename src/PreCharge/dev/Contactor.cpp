@@ -1,5 +1,5 @@
-#include <PreCharge/dev/Contactor.hpp>
 #include <EVT/utils/time.hpp>
+#include <PreCharge/dev/Contactor.hpp>
 
 namespace time = EVT::core::time;
 

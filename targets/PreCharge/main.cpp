@@ -4,9 +4,9 @@
 
 #include <EVT/io/CANopen.hpp>
 #include <EVT/io/UART.hpp>
-#include <EVT/manager.hpp>
 #include <EVT/io/pin.hpp>
 #include <EVT/io/types/CANMessage.hpp>
+#include <EVT/manager.hpp>
 #include <EVT/utils/log.hpp>
 #include <EVT/utils/types/FixedQueue.hpp>
 
@@ -44,9 +44,9 @@ void canInterruptHandler(IO::CANMessage& message, void* priv) {
             canStruct->can->addCANMessage(message);
         }
     } else {
-       if (canStruct != nullptr && canStruct->queue != nullptr) {
-           canStruct->queue->append(message);
-       }
+        if (canStruct != nullptr && canStruct->queue != nullptr) {
+            canStruct->queue->append(message);
+        }
     }
 }
 
@@ -135,10 +135,9 @@ int main() {
     IO::GPIO& dc = IO::getGPIO<PreCharge::PreCharge::DC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
     PreCharge::Contactor cont(
         IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>(IO::GPIO::Direction::OUTPUT),
-            IO::getGPIO<PreCharge::PreCharge::CONT2_PIN>(IO::GPIO::Direction::OUTPUT)
-                );
+        IO::getGPIO<PreCharge::PreCharge::CONT2_PIN>(IO::GPIO::Direction::OUTPUT));
     IO::GPIO& apm = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
-//    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
+    //    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
     PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can, MAX);
 
@@ -185,14 +184,14 @@ int main() {
 
     // Start with everything at 0
     apm.writePin(IO::GPIO::State::LOW);
-//    forward.writePin(IO::GPIO::State::LOW);
+    //    forward.writePin(IO::GPIO::State::LOW);
     pc.writePin(IO::GPIO::State::LOW);
     dc.writePin(IO::GPIO::State::LOW);
 
     PreCharge::PreCharge::PVCStatus status = PreCharge::PreCharge::PVCStatus::PVC_OK;
 
     while (1) {
-        PreCharge::PreCharge::PVCStatus current_status = precharge.handle(uart); // Update state machine
+        PreCharge::PreCharge::PVCStatus current_status = precharge.handle(uart);// Update state machine
 
         if (current_status == PreCharge::PreCharge::PVCStatus::PVC_ERROR) {
             status = PreCharge::PreCharge::PVCStatus::PVC_ERROR;

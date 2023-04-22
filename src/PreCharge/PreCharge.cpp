@@ -10,7 +10,7 @@ namespace PreCharge {
 
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                      IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-                     IO::GPIO& apm,  GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX) : key(key),
+                     IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX) : key(key),
                                                                                     batteryOne(batteryOne),
                                                                                     batteryTwo(batteryTwo),
                                                                                     eStop(eStop),
@@ -371,8 +371,7 @@ void PreCharge::sendChangePDO() {
         static_cast<unsigned short>(batteryOneOkStatus) << 4 | static_cast<unsigned short>(batteryTwoOkStatus),
         static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(apmStatus),
         static_cast<unsigned short>(pcStatus) << 4 | static_cast<unsigned short>(dcStatus),
-        static_cast<unsigned short>(contStatus) << 4
-    };
+        static_cast<unsigned short>(contStatus) << 4};
     IO::CANMessage changePDOMessage(0x48A, 7, &payload[0], false);
     can.transmit(changePDOMessage);
 

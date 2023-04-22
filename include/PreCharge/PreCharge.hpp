@@ -295,7 +295,7 @@ private:
     /** GPIO instance to toggle APM_CTL */
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
-//    IO::GPIO& forward;
+    //    IO::GPIO& forward;
     /** GFDB instance to handle isolation status*/
     GFDB::GFDB& gfdb;
     /** CAN instance to handle CANOpen processes*/
@@ -432,8 +432,7 @@ private:
         {
             .Key = CO_KEY(0x1A00, 0, CO_UNSIGNED8 | CO_OBJ_D__R_),
             .Type = nullptr,
-            .Data = (uintptr_t) 1
-        },
+            .Data = (uintptr_t) 1},
         {
             .Key = CO_KEY(0x1A00, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
             .Type = nullptr,

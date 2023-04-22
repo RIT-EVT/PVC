@@ -1,9 +1,9 @@
 #include <cstring>
 
-#include <PreCharge/PreCharge.hpp>
 #include <EVT/io/GPIO.hpp>
 #include <EVT/io/UART.hpp>
 #include <EVT/manager.hpp>
+#include <PreCharge/PreCharge.hpp>
 
 namespace IO = EVT::core::IO;
 
@@ -49,7 +49,7 @@ int main() {
 
     // Outputs
     IO::GPIO& mcuAPMCtl = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>();
-//    IO::GPIO& mcuFWEnCtl = IO::getGPIO<IO::Pin::PA_3>();
+    //    IO::GPIO& mcuFWEnCtl = IO::getGPIO<IO::Pin::PA_3>();
     IO::GPIO& mcuPcCtl = IO::getGPIO<PreCharge::PreCharge::PC_CTL_PIN>();
     IO::GPIO& mcuDcCtl = IO::getGPIO<PreCharge::PreCharge::DC_CTL_PIN>();
     IO::GPIO& mcuContCtl = IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>();
@@ -62,7 +62,7 @@ int main() {
 
     // Start with everything at 0
     mcuAPMCtl.writePin(IO::GPIO::State::LOW);
-//    mcuFWEnCtl.writePin(IO::GPIO::State::LOW);
+    //    mcuFWEnCtl.writePin(IO::GPIO::State::LOW);
     mcuPcCtl.writePin(IO::GPIO::State::LOW);
     mcuDcCtl.writePin(IO::GPIO::State::LOW);
     mcuContCtl.writePin(IO::GPIO::State::LOW);
@@ -88,7 +88,7 @@ int main() {
             writeGPIO(uart, mcuAPMCtl);
             break;
         case 3:
-//            writeGPIO(uart, mcuFWEnCtl);
+            //            writeGPIO(uart, mcuFWEnCtl);
             break;
         case 4:
             writeGPIO(uart, mcuPcCtl);

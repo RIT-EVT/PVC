@@ -21,6 +21,6 @@ private:
     bool isOpen = false;
 };
 
-}
+}// namespace PreCharge
 
 #endif//PRE_CHARGE_INCLUDE_PRECHARGE_DEV_CONTACTOR_HPP
