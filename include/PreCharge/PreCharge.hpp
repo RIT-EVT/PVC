@@ -76,8 +76,9 @@ public:
     };
 
     enum class PVCStatus {
-        PVC_OK = 0u,
-        PVC_ERROR = 1u
+        PVC_OP = 0u,
+        PVC_PRE_OP = 1u,
+        PVC_NONE = 2u
     };
 
     static PVCStatus pvcStatus;
@@ -91,13 +92,8 @@ public:
     uint64_t changePDO;
     uint64_t cyclicPDO;
 
-    static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
+    static constexpr uint16_t PRECHARGE_DELAY = 2000;      // 2 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
-
-    static constexpr uint8_t MIN_PACK_VOLTAGE = 70;
-
-    static constexpr uint8_t CONST_R = 30;
-    static constexpr float CONST_C = 0.014;
 
     /**
      * Number of attempts that will be made to check the STO status
@@ -316,9 +312,7 @@ private:
     uint8_t gfdStatus;
     uint32_t lastPrechargeTime;
 
-    // Status bit to indicate a precharge error
-    // Key must be cycled (on->off->on) to resume state machine
-    uint8_t cycle_key;
+    uint8_t pre_charged;
 
     State state;
     State prevState;
