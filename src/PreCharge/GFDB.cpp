@@ -28,14 +28,14 @@ IO::CAN::CANStatus GFDB::requestVoltageNegativeHighRes(int32_t* highRes) {
 }
 
 IO::CAN::CANStatus GFDB::requestTemp(int32_t* temperature) {
-    uint8_t tempBuffer[5] = {};
+    uint8_t tempBuffer[4] = {};
 
-    IO::CAN::CANStatus result = requestData(TEMP_REQ_CMD, tempBuffer, 5);
+    IO::CAN::CANStatus result = requestData(TEMP_REQ_CMD, tempBuffer, 4);
     if (result == IO::CAN::CANStatus::ERROR) {
         return result;
     }
 
-    *temperature = (tempBuffer[1] << 24) | (tempBuffer[2] << 16) | (tempBuffer[3] << 8) | tempBuffer[4];
+    *temperature = (tempBuffer[0] << 24) | (tempBuffer[1] << 16) | (tempBuffer[2] << 8) | tempBuffer[3];
     return result;
 }
 
@@ -47,7 +47,7 @@ IO::CAN::CANStatus GFDB::requestIsolationState(uint8_t* isoState) {
         return result;
     }
 
-    *isoState = buf[1] & 0x03;
+    *isoState = buf[0] & 0x03;
     return result;
 }
 
@@ -133,7 +133,8 @@ IO::CAN::CANStatus GFDB::requestData(uint8_t command, uint8_t* receiveBuff, uint
     }
 
     for (uint8_t i = 0; i < receiveSize; i++) {
-        receiveBuff[i] = rxMessage.getPayload()[i];
+        // Skip the first byte because it's just the command repeated back
+        receiveBuff[i] = rxMessage.getPayload()[i+1];
     }
 
     return result;
