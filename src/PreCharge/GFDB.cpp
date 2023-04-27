@@ -134,7 +134,7 @@ IO::CAN::CANStatus GFDB::requestData(uint8_t command, uint8_t* receiveBuff, uint
 
     for (uint8_t i = 0; i < receiveSize; i++) {
         // Skip the first byte because it's just the command repeated back
-        receiveBuff[i] = rxMessage.getPayload()[i+1];
+        receiveBuff[i] = rxMessage.getPayload()[i + 1];
     }
 
     return result;
