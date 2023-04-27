@@ -38,8 +38,6 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
 
     pre_charged = 2;
     sendChangePDO();
-
-    cont.setOpen(true);
 }
 
 PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
@@ -219,8 +217,8 @@ void PreCharge::eStopState() {
 }
 
 void PreCharge::prechargeState() {
-    //Set precharge relay
-    setPrecharge(PreCharge::PinStatus::ENABLE);
+    //Set apm relay
+    setAPM(PreCharge::PinStatus::ENABLE);
     //Send Pre-op
     pre_charged = 0;
     //Wait 2 seconds
@@ -249,7 +247,6 @@ void PreCharge::contOpenState() {
 
 void PreCharge::contCloseState() {
     cont.setOpen(false);
-    setPrecharge(PreCharge::PinStatus::DISABLE);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
     } else if (stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {

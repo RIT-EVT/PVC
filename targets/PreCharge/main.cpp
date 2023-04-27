@@ -119,7 +119,7 @@ int main() {
     CO_TMR_MEM appTmrMem[4];
 
     // Attempt to join the CAN network
-    IO::CAN::CANStatus result = can.connect();
+    IO::CAN::CANStatus result = can.connect(false);
 
     if (result != IO::CAN::CANStatus::OK) {
         EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Failed to connect to CAN network");
