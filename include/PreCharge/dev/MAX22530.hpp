@@ -1,6 +1,8 @@
+#pragma once
 #include <EVT/io/SPI.hpp>
-#include <PreCharge/PreCharge.hpp>
 #include <cstdint>
+
+namespace IO = EVT::core::IO;
 
 namespace PreCharge {
 

@@ -1,27 +1,31 @@
 /**
- * This is the primary State machine handler for the pre-charge board
+ * This is the primary State machine handler for the pre-charge voltage controller (PVC) board
  */
+
 #include <EVT/io/CANopen.hpp>
 #include <EVT/io/UART.hpp>
-#include <EVT/io/manager.hpp>
 #include <EVT/io/pin.hpp>
 #include <EVT/io/types/CANMessage.hpp>
+#include <EVT/manager.hpp>
 #include <EVT/utils/log.hpp>
 #include <EVT/utils/types/FixedQueue.hpp>
 
-#include <EVT/dev/platform/f3xx/f302x8/Timerf302x8.hpp>
 #include <PreCharge/GFDB.hpp>
 #include <PreCharge/PreCharge.hpp>
 
 namespace IO = EVT::core::IO;
 namespace DEV = EVT::core::DEV;
 namespace time = EVT::core::time;
-namespace log = EVT::core::log;
 
 ///////////////////////////////////////////////////////////////////////////////
 // EVT-core CAN callback and CAN setup. This will include logic to set
 // aside CANopen messages into a specific queue
 ///////////////////////////////////////////////////////////////////////////////
+
+struct CANInterruptParams {
+    EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage>* queue;
+    IO::CANf3xx* can;
+};
 
 /**
  * Interrupt handler to get CAN messages. A function pointer to this function
@@ -34,17 +38,23 @@ namespace log = EVT::core::log;
  * @param message[in] The passed in CAN message that was read.
  */
 void canInterruptHandler(IO::CANMessage& message, void* priv) {
-    EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage>* queue =
-        (EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage>*) priv;
-    if (queue != nullptr)
-        queue->append(message);
+    auto* canStruct = (struct CANInterruptParams*) priv;
+    if (message.isCANExtended()) {
+        if (canStruct != nullptr && canStruct->can != nullptr) {
+            canStruct->can->addCANMessage(message);
+        }
+    } else {
+        if (canStruct != nullptr && canStruct->queue != nullptr) {
+            canStruct->queue->append(message);
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // CANopen specific Callbacks. Need to be defined in some location
 ///////////////////////////////////////////////////////////////////////////////
 extern "C" void CONodeFatalError(void) {
-    log::LOGGER.log(log::Logger::LogLevel::ERROR, "Fatal CANopen error");
+    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Fatal CANopen error");
 }
 
 extern "C" void COIfCanReceive(CO_IF_FRM* frm) {}
@@ -73,23 +83,35 @@ extern "C" void COTmrUnlock(void) {}
 
 int main() {
     // Initialize system
-    IO::init();
+    EVT::core::platform::init();
 
     // Queue that will store CANopen messages
     EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage> canOpenQueue;
 
     // Initialize CAN, add an IRQ that will populate the above queue
-    IO::CAN& can = IO::getCAN<IO::Pin::PA_12, IO::Pin::PA_11>();
-    can.addIRQHandler(canInterruptHandler, reinterpret_cast<void*>(&canOpenQueue));
+    IO::CAN& can = IO::getCAN<PreCharge::PreCharge::CAN_TX_PIN, PreCharge::PreCharge::CAN_RX_PIN>();
+    struct CANInterruptParams canParams = {
+        .queue = &canOpenQueue,
+        .can = static_cast<IO::CANf3xx*>(&can),
+    };
+    can.addIRQHandler(canInterruptHandler, reinterpret_cast<void*>(&canParams));
+
+    // Initialize MAX22530 and SPI
+    IO::GPIO* CSPins[1];
+    CSPins[0] = &IO::getGPIO<PreCharge::PreCharge::SPI_CS>(IO::GPIO::Direction::OUTPUT);
+    CSPins[0]->writePin(IO::GPIO::State::HIGH);
+    IO::SPI& spi = IO::getSPI<PreCharge::PreCharge::SPI_SCK, PreCharge::PreCharge::SPI_MOSI, PreCharge::PreCharge::SPI_MISO>(CSPins, 1);
+    spi.configureSPI(SPI_SPEED_125KHZ, SPI_MODE0, SPI_MSB_FIRST);
+    PreCharge::MAX22530 MAX(spi);
 
     // Initialize the timer
-    DEV::Timerf302x8 timer(TIM2, 100);
+    DEV::Timer& timer = DEV::getTimer<DEV::MCUTimer::Timer2>(100);
 
     // Set up Logger
-    IO::UART& uart = IO::getUART<IO::Pin::PB_6, IO::Pin::PB_7>(9600);
-    log::LOGGER.setUART(&uart);
-    log::LOGGER.setLogLevel(log::Logger::LogLevel::DEBUG);
-    log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Logger initialized.");
+    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600, true);
+    EVT::core::log::LOGGER.setUART(&uart);
+    EVT::core::log::LOGGER.setLogLevel(EVT::core::log::Logger::LogLevel::DEBUG);
+    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Logger initialized.");
     timer.stopTimer();
 
     // Reserved memory for CANopen stack usage
@@ -100,22 +122,24 @@ int main() {
     IO::CAN::CANStatus result = can.connect();
 
     if (result != IO::CAN::CANStatus::OK) {
-        EVT::core::log::LOGGER.log(log::Logger::LogLevel::ERROR, "Failed to connect to CAN network");
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Failed to connect to CAN network");
         return 1;
     }
 
     // Set up pre_charge
-    IO::GPIO& key = IO::getGPIO<IO::Pin::PA_1>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& batteryOne = IO::getGPIO<IO::Pin::PA_10>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& batteryTwo = IO::getGPIO<IO::Pin::PA_9>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& eStop = IO::getGPIO<IO::Pin::PA_0>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& pc = IO::getGPIO<IO::Pin::PA_4>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& dc = IO::getGPIO<IO::Pin::PA_5>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& cont = IO::getGPIO<IO::Pin::PA_8>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& apm = IO::getGPIO<IO::Pin::PA_2>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& key = IO::getGPIO<PreCharge::PreCharge::KEY_IN_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& batteryOne = IO::getGPIO<PreCharge::PreCharge::BAT_OK_1_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& batteryTwo = IO::getGPIO<PreCharge::PreCharge::BAT_OK_2_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& eStop = IO::getGPIO<PreCharge::PreCharge::ESTOP_IN_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& pc = IO::getGPIO<PreCharge::PreCharge::PC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& dc = IO::getGPIO<PreCharge::PreCharge::DC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
+    PreCharge::Contactor cont(
+        IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>(IO::GPIO::Direction::OUTPUT),
+        IO::getGPIO<PreCharge::PreCharge::CONT2_PIN>(IO::GPIO::Direction::OUTPUT));
+    IO::GPIO& apm = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
+    //    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
-    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, forward, gfdb, can);
+    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can, MAX);
 
     ///////////////////////////////////////////////////////////////////////////
     // Setup CAN configuration, this handles making drivers, applying settings.
@@ -158,17 +182,22 @@ int main() {
 
     time::wait(500);
 
-    EVT::core::log::LOGGER.log(log::Logger::LogLevel::DEBUG, "Error: %d", CONodeGetErr(&canNode));
-
     // Start with everything at 0
     apm.writePin(IO::GPIO::State::LOW);
-    forward.writePin(IO::GPIO::State::LOW);
+    //    forward.writePin(IO::GPIO::State::LOW);
     pc.writePin(IO::GPIO::State::LOW);
     dc.writePin(IO::GPIO::State::LOW);
-    cont.writePin(IO::GPIO::State::LOW);
+
+    PreCharge::PreCharge::PVCStatus status = PreCharge::PreCharge::PVCStatus::PVC_OK;
 
     while (1) {
-        precharge.handle();//update state machine
+        PreCharge::PreCharge::PVCStatus current_status = precharge.handle(uart);// Update state machine
+
+        if (current_status == PreCharge::PreCharge::PVCStatus::PVC_ERROR) {
+            status = PreCharge::PreCharge::PVCStatus::PVC_ERROR;
+        } else if (status == PreCharge::PreCharge::PVCStatus::PVC_ERROR && current_status == PreCharge::PreCharge::PVCStatus::PVC_OK) {
+            status = PreCharge::PreCharge::PVCStatus::PVC_OK;
+        }
 
         // Process incoming CAN messages
         CONodeProcess(&canNode);
@@ -177,6 +206,6 @@ int main() {
         // Handle executing timer events that have elapsed
         COTmrProcess(&canNode.Tmr);
 
-        time::wait(10);// May not be necessary
+        time::wait(100);// May not be necessary
     }
 }

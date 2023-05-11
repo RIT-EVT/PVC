@@ -1,7 +1,5 @@
 #include <PreCharge/dev/MAX22530.hpp>
 
-#include <EVT/io/SPI.hpp>
-
 namespace PreCharge {
 
 MAX22530::MAX22530(IO::SPI& SPI) : spi(SPI) {}

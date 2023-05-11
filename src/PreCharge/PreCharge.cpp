@@ -1,5 +1,6 @@
 #include <PreCharge/PreCharge.hpp>
 
+#include <EVT/utils/log.hpp>
 #include <EVT/utils/time.hpp>
 
 namespace IO = EVT::core::IO;
@@ -8,18 +9,18 @@ namespace time = EVT::core::time;
 namespace PreCharge {
 
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-                     IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-                     IO::GPIO& apm, IO::GPIO& forward, GFDB::GFDB& gfdb, IO::CAN& can) : key(key),
-                                                                                         batteryOne(batteryOne),
-                                                                                         batteryTwo(batteryTwo),
-                                                                                         eStop(eStop),
-                                                                                         pc(pc),
-                                                                                         dc(dc),
-                                                                                         cont(cont),
-                                                                                         apm(apm),
-                                                                                         forward(forward),
-                                                                                         gfdb(gfdb),
-                                                                                         can(can) {
+                     IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+                     IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX) : key(key),
+                                                                                    batteryOne(batteryOne),
+                                                                                    batteryTwo(batteryTwo),
+                                                                                    eStop(eStop),
+                                                                                    pc(pc),
+                                                                                    dc(dc),
+                                                                                    cont(cont),
+                                                                                    apm(apm),
+                                                                                    gfdb(gfdb),
+                                                                                    can(can),
+                                                                                    MAX(MAX) {
     state = State::MC_OFF;
     prevState = State::MC_OFF;
 
@@ -28,17 +29,20 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     batteryOneOkStatus = IO::GPIO::State::LOW;
     batteryTwoOkStatus = IO::GPIO::State::LOW;
     eStopActiveStatus = IO::GPIO::State::HIGH;
-    forwardStatus = IO::GPIO::State::LOW;
     pcStatus = IO::GPIO::State::LOW;
     dcStatus = IO::GPIO::State::LOW;
-    contStatus = IO::GPIO::State::LOW;
+    contStatus = 0;
+    voltStatus = 0;
     apmStatus = IO::GPIO::State::LOW;
-    forwardStatus = IO::GPIO::State::LOW;
 
-    gfdStatus = 0;
+    gfdStatus = 1;
+    initVolt = 0;
+
+    cycle_key = 0;
+    sendChangePDO();
 }
 
-void PreCharge::handle() {
+PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
     getSTO();     //update value of STO
     getMCKey();   //update value of MC_KEY_IN
     getIOStatus();//update value of IOStatus
@@ -78,45 +82,130 @@ void PreCharge::handle() {
     default:
         break;
     }
+
+    if (cycle_key) {
+        return PVCStatus::PVC_ERROR;
+    } else {
+        return PVCStatus::PVC_OK;
+    }
 }
 
 void PreCharge::getSTO() {
-    uint8_t gfdBuffer;
-    IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
-    //GFDB messages gotten from datasheet. 00 = no error, 10 = warning, 11 = error
-    if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
-        gfdStatus = 0;
-    } else if (gfdBuffer == 0b11) {
-        gfdStatus = 1;
+    if (in_precharge == 2 && time::millis() - lastPrechargeTime > 5000) {
+        uint8_t gfdBuffer;
+        IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
+        //Error connecting to GFDB
+        if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
+            gfdStatus = 1;
+        } else if (gfdBuffer == 0b11) {
+            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Bad GFDB");
+            gfdStatus = 0;
+        }
     }
 
     batteryOneOkStatus = batteryOne.readPin();
     batteryTwoOkStatus = batteryTwo.readPin();
     eStopActiveStatus = eStop.readPin();
+    voltStatus = MAX.readVoltage(0x02) > MIN_PACK_VOLTAGE;
 
-    if (batteryOneOkStatus == IO::GPIO::State::HIGH && batteryTwoOkStatus == IO::GPIO::State::HIGH && eStopActiveStatus == IO::GPIO::State::HIGH) {
-        stoStatus = IO::GPIO::State::HIGH;
-    } else {
-        if (numAttemptsMade > MAX_STO_ATTEMPTS) {
-            stoStatus = IO::GPIO::State::LOW;
+    if (in_precharge == 2) {
+        if (batteryOneOkStatus == IO::GPIO::State::HIGH
+            && batteryTwoOkStatus == IO::GPIO::State::HIGH
+            && eStopActiveStatus == IO::GPIO::State::HIGH
+            && gfdStatus == 1
+            && voltStatus == 1) {
+            stoStatus = IO::GPIO::State::HIGH;
             numAttemptsMade = 0;
-            return;
-        }
+        } else {
+            if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                cycle_key = 1;
+                stoStatus = IO::GPIO::State::LOW;
+                numAttemptsMade = 0;
+                return;
+            }
+            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
 
-        numAttemptsMade++;
+            numAttemptsMade++;
+        }
+    } else {
+        if (batteryOneOkStatus == IO::GPIO::State::HIGH
+            && batteryTwoOkStatus == IO::GPIO::State::HIGH
+            && eStopActiveStatus == IO::GPIO::State::HIGH
+            && voltStatus == 1) {
+            stoStatus = IO::GPIO::State::HIGH;
+            numAttemptsMade = 0;
+        } else {
+            if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                cycle_key = 1;
+                stoStatus = IO::GPIO::State::LOW;
+                numAttemptsMade = 0;
+                return;
+            }
+            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
+
+            numAttemptsMade++;
+        }
     }
 }
 
+int PreCharge::getPrechargeStatus() {
+    PrechargeStatus status;
+    static uint64_t delta_time;
+    uint16_t pack_voltage;
+    uint16_t measured_voltage;
+    uint16_t expected_voltage;
+
+    if (in_precharge == 0) {
+        in_precharge = 1;
+        state_start_time = time::millis();
+        initVolt = MAX.readVoltage(0x01);
+    }
+
+    delta_time = time::millis() - state_start_time;
+    measured_voltage = MAX.readVoltage(0x01);
+    pack_voltage = MAX.readVoltage(0x02);
+    expected_voltage = solveForVoltage(pack_voltage, delta_time);
+
+    if (measured_voltage >= (expected_voltage - 5) && measured_voltage <= (expected_voltage + 5) && pack_voltage > MIN_PACK_VOLTAGE) {
+        if (measured_voltage >= (pack_voltage - 1) && measured_voltage <= (pack_voltage + 1)) {
+            lastPrechargeTime = time::millis();
+            status = PrechargeStatus::DONE;
+            in_precharge = 2;
+        } else {
+            status = PrechargeStatus::OK;
+        }
+    } else {
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Meas: %d, Exp: %d, Pack: %d", measured_voltage, expected_voltage, pack_voltage);
+        status = PrechargeStatus::ERROR;
+        cycle_key = 1;
+        in_precharge = 0;
+    }
+
+    return static_cast<int>(status);
+}
+
+uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
+    return initVolt + ((pack_voltage - initVolt) * (1 - exp(-(delta_time / (1000 * 30 * 0.014)))));
+}
+
 void PreCharge::getMCKey() {
-    keyInStatus = key.readPin();
+    if (cycle_key) {
+        if (key.readPin() == IO::GPIO::State::LOW) {
+            cycle_key = 0;
+        } else {
+            keyInStatus = IO::GPIO::State::LOW;
+        }
+    } else {
+        keyInStatus = key.readPin();
+    }
 }
 
 void PreCharge::getIOStatus() {
     pcStatus = pc.readPin();
     dcStatus = dc.readPin();
-    contStatus = cont.readPin();
     apmStatus = apm.readPin();
-    forwardStatus = forward.readPin();
 }
 
 void PreCharge::setPrecharge(PreCharge::PinStatus state) {
@@ -135,14 +224,6 @@ void PreCharge::setDischarge(PreCharge::PinStatus state) {
     }
 }
 
-void PreCharge::setContactor(PreCharge::PinStatus state) {
-    if (static_cast<uint8_t>(state)) {
-        cont.writePin(IO::GPIO::State::HIGH);
-    } else {
-        cont.writePin(IO::GPIO::State::LOW);
-    }
-}
-
 void PreCharge::setAPM(PreCharge::PinStatus state) {
     if (static_cast<uint8_t>(state)) {
         apm.writePin(IO::GPIO::State::HIGH);
@@ -151,15 +232,8 @@ void PreCharge::setAPM(PreCharge::PinStatus state) {
     }
 }
 
-void PreCharge::setForward(PreCharge::PinStatus state) {
-    if (static_cast<uint8_t>(state)) {
-        forward.writePin(IO::GPIO::State::HIGH);
-    } else {
-        forward.writePin(IO::GPIO::State::LOW);
-    }
-}
-
 void PreCharge::mcOffState() {
+    in_precharge = 0;
     if (stoStatus == IO::GPIO::State::LOW) {
         state = State::ESTOPWAIT;
         if (prevState != state) {
@@ -180,7 +254,6 @@ void PreCharge::mcOffState() {
 void PreCharge::mcOnState() {
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
-        state_start_time = time::millis();
         if (prevState != state) {
             sendChangePDO();
         }
@@ -202,35 +275,37 @@ void PreCharge::eStopState() {
 
 void PreCharge::prechargeState() {
     setPrecharge(PreCharge::PinStatus::ENABLE);
+    int precharging = getPrechargeStatus();
+
+    // Stay in prechargeState until DONE unless ERROR
+    if (precharging == static_cast<int>(PrechargeStatus::ERROR) || stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Precharge error");
+        state = State::FORWARD_DISABLE;
+    } else if (precharging == static_cast<int>(PrechargeStatus::DONE)) {
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Precharge done");
+        state = State::CONT_CLOSE;
+    }
     if (prevState != state) {
         sendChangePDO();
-    }
-    if ((time::millis() - state_start_time) > PRECHARGE_DELAY) {
-        setPrecharge(PreCharge::PinStatus::DISABLE);
-        if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
-            state = State::CONT_OPEN;
-        } else {
-            state = State::CONT_CLOSE;
-        }
     }
     prevState = state;
 }
 
 void PreCharge::dischargeState() {
     setDischarge(PreCharge::PinStatus::ENABLE);
-    if (prevState != state) {
-        sendChangePDO();
-    }
     if ((time::millis() - state_start_time) > DISCHARGE_DELAY) {
         setDischarge(PreCharge::PinStatus::DISABLE);
         state = State::MC_OFF;
+    }
+    if (prevState != state) {
         sendChangePDO();
     }
     prevState = state;
 }
 
 void PreCharge::contOpenState() {
-    setContactor(PreCharge::PinStatus::DISABLE);
+    cont.setOpen(true);
+    contStatus = 0;
     state = State::DISCHARGE;
     state_start_time = time::millis();
     if (prevState != state) {
@@ -240,16 +315,17 @@ void PreCharge::contOpenState() {
 }
 
 void PreCharge::contCloseState() {
-    setContactor(PreCharge::PinStatus::ENABLE);
-    setForward(PreCharge::PinStatus::ENABLE);
+    cont.setOpen(false);
+    contStatus = 1;
+    setPrecharge(PreCharge::PinStatus::DISABLE);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
-        state = State::CONT_OPEN;
+        state = State::FORWARD_DISABLE;
     } else if (stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {
         setAPM(PreCharge::PinStatus::ENABLE);
 
         //CAN message to wake TMS
-        uint8_t payload[1] = {0x01};
-        IO::CANMessage TMSOpMessage(0, 1, payload, false);
+        uint8_t payload[2] = {0x01, 0x08};
+        IO::CANMessage TMSOpMessage(0, 2, payload, false);
         can.transmit(TMSOpMessage);
 
         state = State::MC_ON;
@@ -261,13 +337,13 @@ void PreCharge::contCloseState() {
 }
 
 void PreCharge::forwardDisableState() {
-    setForward(PreCharge::PinStatus::DISABLE);
+    setPrecharge(PreCharge::PinStatus::DISABLE);
     if ((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
         setAPM(PreCharge::PinStatus::DISABLE);
 
         //CAN message to send TMS into pre-op state
-        uint8_t payload[1] = {0x80};
-        IO::CANMessage TMSOpMessage(0, 1, payload, false);
+        uint8_t payload[2] = {0x80, 0x08};
+        IO::CANMessage TMSOpMessage(0, 2, payload, false);
         can.transmit(TMSOpMessage);
 
         state = State::CONT_OPEN;
@@ -288,16 +364,18 @@ uint16_t PreCharge::getObjectDictionarySize() {
 
 void PreCharge::sendChangePDO() {
     uint8_t payload[] = {
-        Statusword,
+        static_cast<uint8_t>(state),
         0x00,
         static_cast<unsigned short>(keyInStatus) << 4 | static_cast<unsigned short>(stoStatus),
         static_cast<unsigned short>(batteryOneOkStatus) << 4 | static_cast<unsigned short>(batteryTwoOkStatus),
-        static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(forwardStatus),
+        static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(apmStatus),
         static_cast<unsigned short>(pcStatus) << 4 | static_cast<unsigned short>(dcStatus),
-        static_cast<unsigned short>(contStatus) << 4 | static_cast<unsigned short>(apmStatus),
-    };
-    IO::CANMessage changePDOMessage(0x48A, 7, &payload[0], false);
+        static_cast<unsigned short>(contStatus) << 4 | static_cast<unsigned short>(voltStatus)};
+    IO::CANMessage changePDOMessage(0x48A, 7, payload, false);
     can.transmit(changePDOMessage);
+
+    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; a: %d, pc: %d, dc: %d, c: %d, v: %d",
+                               state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, contStatus, voltStatus);
 }
 
 }// namespace PreCharge

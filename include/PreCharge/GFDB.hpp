@@ -35,6 +35,8 @@ enum GFDB_COMMAND {
  */
 class GFDB {
 public:
+    //TODO: Retest all functions in this class to confirm that they work properly
+
     /**
      * Constructor for the GFDB Class
      *
@@ -149,7 +151,7 @@ private:
      * @param[in] receiveSize Size of receive buffer
      * @return The status of the CAN call
      */
-    IO::CAN::CANStatus requestData(uint8_t command, uint8_t* receiveBuff, size_t receiveSize);
+    IO::CAN::CANStatus requestData(uint8_t command, uint8_t* receiveBuff, uint8_t receiveSize);
 
     /**
      * Helper method for sending a command to the GFDB through CAN

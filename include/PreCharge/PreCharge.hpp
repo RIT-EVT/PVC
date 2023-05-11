@@ -1,9 +1,16 @@
 #pragma once
 
+#include "PreCharge/dev/Contactor.hpp"
 #include <Canopen/co_core.h>
 #include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
+#include <EVT/io/SPI.hpp>
+#include <EVT/io/UART.hpp>
+#include <EVT/io/pin.hpp>
 #include <PreCharge/GFDB.hpp>
+#include <PreCharge/dev/MAX22530.hpp>
+
+#include <math.h>
 
 namespace IO = EVT::core::IO;
 
@@ -36,10 +43,44 @@ public:
         FORWARD_DISABLE = 7u
     };
 
+    /** PVC Pinout */
+    static constexpr IO::Pin UART_TX_PIN = IO::Pin::PB_6;
+    static constexpr IO::Pin UART_RX_PIN = IO::Pin::PB_7;
+    static constexpr IO::Pin CAN_TX_PIN = IO::Pin::PA_12;
+    static constexpr IO::Pin CAN_RX_PIN = IO::Pin::PA_11;
+    static constexpr IO::Pin KEY_IN_PIN = IO::Pin::PF_1;
+    static constexpr IO::Pin BAT_OK_1_PIN = IO::Pin::PB_5;
+    static constexpr IO::Pin BAT_OK_2_PIN = IO::Pin::PB_4;
+    static constexpr IO::Pin ESTOP_IN_PIN = IO::Pin::PF_0;
+    static constexpr IO::Pin PC_CTL_PIN = IO::Pin::PA_3;
+    static constexpr IO::Pin DC_CTL_PIN = IO::Pin::PA_4;
+    static constexpr IO::Pin APM_CTL_PIN = IO::Pin::PA_2;
+    static constexpr IO::Pin CONT1_PIN = IO::Pin::PA_10;
+    static constexpr IO::Pin CONT2_PIN = IO::Pin::PA_9;
+    static constexpr IO::Pin SPI_CS = IO::Pin::PB_0;
+    static constexpr IO::Pin SPI_MOSI = IO::Pin::PA_7;
+    static constexpr IO::Pin SPI_MISO = IO::Pin::PA_6;
+    static constexpr IO::Pin SPI_SCK = IO::Pin::PA_5;
+    static constexpr IO::Pin SPI_INT = IO::Pin::PA_8;
+
     enum class PinStatus {
         DISABLE = 0u,
-        ENABLE = 1u
+        ENABLE = 1u,
+        HOLD = 2u
     };
+
+    enum class PrechargeStatus {
+        OK = 0u,
+        DONE = 1u,
+        ERROR = 2u
+    };
+
+    enum class PVCStatus {
+        PVC_OK = 0u,
+        PVC_ERROR = 1u
+    };
+
+    static PVCStatus pvcStatus;
 
     uint8_t Statusword;//8
 
@@ -50,15 +91,19 @@ public:
     uint64_t changePDO;
     uint64_t cyclicPDO;
 
-    static constexpr uint16_t PRECHARGE_DELAY = 5250;      // 5.25 seconds
     static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
+
+    static constexpr uint8_t MIN_PACK_VOLTAGE = 70;
+
+    static constexpr uint8_t CONST_R = 30;
+    static constexpr float CONST_C = 0.014;
 
     /**
      * Number of attempts that will be made to check the STO status
      * before failing
      */
-    static constexpr uint16_t MAX_STO_ATTEMPTS = 50;
+    static constexpr uint16_t MAX_STO_ATTEMPTS = 25;
 
     /**
      * Utility variable which can be used to count the number of attempts that
@@ -67,7 +112,7 @@ public:
      * For example, this is used for checking the STO N
      * number of times before failing
      */
-    uint16_t numAttemptsMade;
+    uint16_t numAttemptsMade = 0;
 
     /**
      * Constructor for pre-charge state machine
@@ -78,34 +123,58 @@ public:
      * @param[in] eStop GPIO for motorcycle e-stop
      * @param[in] pc GPIO for precharge contactor
      * @param[in] dc GPIO for discharge contactor
-     * @param[in] cont GPIO for main contactor
+     * @param[in] cont Driver for main contactor
      * @param[in] apm GPIO for apm control
      * @param[in] forward GPIO for forward enable
      * @param[in] gfdb GPIO for gfdb fault signal
      * @param[in] can can instance for CANopen
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, IO::GPIO& cont,
-              IO::GPIO& apm, IO::GPIO& forward, GFDB::GFDB& gfdb, IO::CAN& can);
+              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
 
     /**
      * The node ID used to identify the device on the CAN network.
      */
-    static constexpr uint8_t NODE_ID = 0x02;
+    static constexpr uint8_t NODE_ID = 10;
 
     /**
      * Handler running the pre-charge state switching
      */
-    void handle();
+    PVCStatus handle(IO::UART& uart);
 
     /**
-    * Get the value of STO (Safe to Operate)
-    * 
-    * STO=1 when BATTERY_1_OK=1 AND BATTERY_2_OK=1 AND EMERGENCY_STOP=1
-    * 
-    * @return value of STO, 0 or 1
-    */
+     * Get the value of STO (Safe to Operate)
+     *
+     * TODO: Update documentation
+     * STO=1 when BATTERY_1_OK=1 AND BATTERY_2_OK=1 AND EMERGENCY_STOP=1
+     *
+     * @return value of STO, 0 or 1
+     */
     void getSTO();
+
+    /**
+     * Get the value of the Precharge compared against the ideal precharge voltage curve
+     * 
+     * DONE signifies that the precharge system has reached the target voltage without any errors
+     * OK signifies that the precharge system is not at target voltage and there are no errors
+     * ERROR signifies that the precharge system has either lagged behind or overshot the ideal curve
+     * 
+     * @return int value of PrechargeStatus enum
+    */
+    int getPrechargeStatus();
+
+    /**
+     * Requests and handles the isolation state from the SIM100
+    */
+    void checkGFDB();
+
+    /**
+     * Get the current expected voltage based on the current precharge time
+     * 
+     * @return float value of expected voltage in Volts
+    */
+    uint16_t solveForVoltage(uint16_t pack_voltage, uint64_t delta_time);
 
     /**
      * Get the state of MC_KEY_IN
@@ -131,20 +200,6 @@ public:
      * @param state 0 = discharge disabled, 1 = discharge enabled
      */
     void setDischarge(PinStatus state);
-
-    /**
-     * Toggle the state of the Main Contactor
-     * 
-     * @param state 0 = contactor open, 1 = contactor closed
-     */
-    void setContactor(PinStatus state);
-
-    /**
-     * Set the Forward state
-     * 
-     * @param state 0 = forward disabled, 1 = forward enabled
-     */
-    void setForward(PinStatus state);
 
     /**
      * Set the APM state
@@ -236,16 +291,18 @@ private:
     IO::GPIO& pc;
     /** GPIO instance to toggle DC_CTL */
     IO::GPIO& dc;
-    /** GPIO instance to toggle CONT_CTL */
-    IO::GPIO& cont;
+    /** Contactor instance to control the main contactor */
+    Contactor cont;
     /** GPIO instance to toggle APM_CTL */
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
-    IO::GPIO& forward;
+    //    IO::GPIO& forward;
     /** GFDB instance to handle isolation status*/
     GFDB::GFDB& gfdb;
     /** CAN instance to handle CANOpen processes*/
     IO::CAN& can;
+
+    MAX22530 MAX;
 
     IO::GPIO::State keyInStatus;
     IO::GPIO::State stoStatus;
@@ -254,15 +311,22 @@ private:
     IO::GPIO::State eStopActiveStatus;
     IO::GPIO::State pcStatus;
     IO::GPIO::State dcStatus;
-    IO::GPIO::State contStatus;
+    uint8_t contStatus;
+    uint8_t voltStatus;
     IO::GPIO::State apmStatus;
-    IO::GPIO::State forwardStatus;
 
     uint8_t gfdStatus;
+    uint32_t lastPrechargeTime;
+
+    // Status bit to indicate a precharge error
+    // Key must be cycled (on->off->on) to resume state machine
+    uint8_t cycle_key;
 
     State state;
     State prevState;
     uint64_t state_start_time;
+    int in_precharge;
+    uint8_t initVolt;
 
     /**
      * Handles the sending of a CAN message upon each state change.
@@ -284,6 +348,13 @@ private:
     CO_OBJ_T objectDictionary[OBJECT_DICTIONARY_SIZE + 1] = {
         // Sync ID, defaults to 0x80
         {CO_KEY(0x1005, 0, CO_UNSIGNED32 | CO_OBJ_D__R_), nullptr, (uintptr_t) 0x80},
+
+        // Enable heartbeat
+        {
+            CO_KEY(0x1017, 0, CO_UNSIGNED16 | CO_OBJ_D__R_),
+            CO_THB_PROD,
+            (uintptr_t) 100,
+        },
 
         // Information about the hardware, hard coded sample values for now
         // 1: Vendor ID
@@ -339,7 +410,7 @@ private:
         {
             .Key = CO_KEY(0x1800, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
             .Type = nullptr,
-            .Data = (uintptr_t) CO_COBID_TPDO_DEFAULT(0),
+            .Data = (uintptr_t) CO_COBID_TPDO_DEFAULT(0) + NODE_ID,
         },
         {
             .Key = CO_KEY(0x1800, 2, CO_UNSIGNED8 | CO_OBJ_D__R_),
@@ -377,6 +448,11 @@ private:
             .Key = CO_KEY(0x2100, 0, CO_UNSIGNED8 | CO_OBJ___PRW),
             .Type = nullptr,
             .Data = (uintptr_t) &state,
+        },
+        {
+            .Key = CO_KEY(0x1017, 0, CO_UNSIGNED16 | CO_OBJ_D__R_),
+            .Type = CO_THB_PROD,
+            .Data = (uintptr_t) 1000,
         },
 
         // End of dictionary marker
