@@ -136,7 +136,7 @@ public:
     /**
      * The node ID used to identify the device on the CAN network.
      */
-    static constexpr uint8_t NODE_ID = 0x10;
+    static constexpr uint8_t NODE_ID = 10;
 
     /**
      * Handler running the pre-charge state switching
@@ -410,7 +410,7 @@ private:
         {
             .Key = CO_KEY(0x1800, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
             .Type = nullptr,
-            .Data = (uintptr_t) CO_COBID_TPDO_DEFAULT(0),
+            .Data = (uintptr_t) CO_COBID_TPDO_DEFAULT(0) + NODE_ID,
         },
         {
             .Key = CO_KEY(0x1800, 2, CO_UNSIGNED8 | CO_OBJ_D__R_),

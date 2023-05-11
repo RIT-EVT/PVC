@@ -296,7 +296,6 @@ void PreCharge::dischargeState() {
     if ((time::millis() - state_start_time) > DISCHARGE_DELAY) {
         setDischarge(PreCharge::PinStatus::DISABLE);
         state = State::MC_OFF;
-        sendChangePDO();
     }
     if (prevState != state) {
         sendChangePDO();
@@ -325,8 +324,8 @@ void PreCharge::contCloseState() {
         setAPM(PreCharge::PinStatus::ENABLE);
 
         //CAN message to wake TMS
-        uint8_t payload[1] = {0x01};
-        IO::CANMessage TMSOpMessage(0, 1, payload, false);
+        uint8_t payload[2] = {0x01, 0x08};
+        IO::CANMessage TMSOpMessage(0, 2, payload, false);
         can.transmit(TMSOpMessage);
 
         state = State::MC_ON;
@@ -343,8 +342,8 @@ void PreCharge::forwardDisableState() {
         setAPM(PreCharge::PinStatus::DISABLE);
 
         //CAN message to send TMS into pre-op state
-        uint8_t payload[1] = {0x80};
-        IO::CANMessage TMSOpMessage(0, 1, payload, false);
+        uint8_t payload[2] = {0x80, 0x08};
+        IO::CANMessage TMSOpMessage(0, 2, payload, false);
         can.transmit(TMSOpMessage);
 
         state = State::CONT_OPEN;
@@ -371,8 +370,8 @@ void PreCharge::sendChangePDO() {
         static_cast<unsigned short>(batteryOneOkStatus) << 4 | static_cast<unsigned short>(batteryTwoOkStatus),
         static_cast<unsigned short>(eStopActiveStatus) << 4 | static_cast<unsigned short>(apmStatus),
         static_cast<unsigned short>(pcStatus) << 4 | static_cast<unsigned short>(dcStatus),
-        static_cast<unsigned short>(contStatus) << 4};
-    IO::CANMessage changePDOMessage(0x48A, 7, &payload[0], false);
+        static_cast<unsigned short>(contStatus) << 4 | static_cast<unsigned short>(voltStatus)};
+    IO::CANMessage changePDOMessage(0x48A, 7, payload, false);
     can.transmit(changePDOMessage);
 
     EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; a: %d, pc: %d, dc: %d, c: %d, v: %d",

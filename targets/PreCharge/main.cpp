@@ -195,10 +195,8 @@ int main() {
 
         if (current_status == PreCharge::PreCharge::PVCStatus::PVC_ERROR) {
             status = PreCharge::PreCharge::PVCStatus::PVC_ERROR;
-            CONmtSetMode(&canNode.Nmt, CO_PREOP);
         } else if (status == PreCharge::PreCharge::PVCStatus::PVC_ERROR && current_status == PreCharge::PreCharge::PVCStatus::PVC_OK) {
             status = PreCharge::PreCharge::PVCStatus::PVC_OK;
-            CONmtSetMode(&canNode.Nmt, CO_OPERATIONAL);
         }
 
         // Process incoming CAN messages
