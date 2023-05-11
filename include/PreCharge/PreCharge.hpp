@@ -324,6 +324,7 @@ private:
     State prevState;
     uint64_t state_start_time;
     int in_precharge;
+    uint8_t initVolt;
 
     /**
      * Handles the sending of a CAN message upon each state change.

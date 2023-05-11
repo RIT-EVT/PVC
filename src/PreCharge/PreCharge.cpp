@@ -34,7 +34,8 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     contStatus = 0;
     apmStatus = IO::GPIO::State::LOW;
 
-    gfdStatus = 0;
+    gfdStatus = 1;
+    initVolt = 0;
 
     cycle_key = 0;
     sendChangePDO();
@@ -153,20 +154,15 @@ int PreCharge::getPrechargeStatus() {
     uint16_t expected_voltage;
 
     if (in_precharge == 0) {
-        state_start_time = time::millis();
         in_precharge = 1;
-        delta_time = time::millis() - state_start_time;
-        status = PrechargeStatus::OK;
-        pack_voltage = MAX.readVoltage(0x02);
-        measured_voltage = MAX.readVoltage(0x01);
-        expected_voltage = solveForVoltage((pack_voltage - measured_voltage), delta_time);
-    } else {
-        delta_time = time::millis() - state_start_time;
-        status = PrechargeStatus::OK;
-        pack_voltage = MAX.readVoltage(0x02);
-        expected_voltage = solveForVoltage(pack_voltage, delta_time);
-        measured_voltage = MAX.readVoltage(0x01);
+        state_start_time = time::millis();
+        initVolt = MAX.readVoltage(0x01);
     }
+
+    delta_time = time::millis() - state_start_time;
+    measured_voltage = MAX.readVoltage(0x01);
+    pack_voltage = MAX.readVoltage(0x02);
+    expected_voltage = solveForVoltage(pack_voltage, delta_time);
 
     if (measured_voltage >= (expected_voltage - 5) && measured_voltage <= (expected_voltage + 5) && pack_voltage > MIN_PACK_VOLTAGE) {
         if (measured_voltage >= (pack_voltage - 1) && measured_voltage <= (pack_voltage + 1)) {
@@ -177,7 +173,7 @@ int PreCharge::getPrechargeStatus() {
             status = PrechargeStatus::OK;
         }
     } else {
-        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "%d:%d, %d", measured_voltage, expected_voltage, pack_voltage);
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Meas: %d, Exp: %d, Pack: %d", measured_voltage, expected_voltage, pack_voltage);
         status = PrechargeStatus::ERROR;
         cycle_key = 1;
         in_precharge = 0;
@@ -187,7 +183,7 @@ int PreCharge::getPrechargeStatus() {
 }
 
 uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
-    return (pack_voltage * (1 - exp(-(delta_time / (1000 * 30 * 0.014)))));
+    return initVolt + ((pack_voltage - initVolt) * (1 - exp(-(delta_time / (1000 * 30 * 0.014)))));
 }
 
 void PreCharge::getMCKey() {
