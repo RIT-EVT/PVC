@@ -18,7 +18,7 @@ public:
 private:
     IO::GPIO& cont1;
     IO::GPIO& cont2;
-    bool isOpen = false;
+    bool isOpen = true;
 };
 
 }// namespace PreCharge
