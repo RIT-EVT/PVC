@@ -32,6 +32,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     pcStatus = IO::GPIO::State::LOW;
     dcStatus = IO::GPIO::State::LOW;
     contStatus = 0;
+    voltStatus = 0;
     apmStatus = IO::GPIO::State::LOW;
 
     gfdStatus = 1;
@@ -105,12 +106,14 @@ void PreCharge::getSTO() {
     batteryOneOkStatus = batteryOne.readPin();
     batteryTwoOkStatus = batteryTwo.readPin();
     eStopActiveStatus = eStop.readPin();
+    voltStatus = MAX.readVoltage(0x02) > MIN_PACK_VOLTAGE;
 
     if (in_precharge == 2) {
         if (batteryOneOkStatus == IO::GPIO::State::HIGH
             && batteryTwoOkStatus == IO::GPIO::State::HIGH
             && eStopActiveStatus == IO::GPIO::State::HIGH
-            && gfdStatus == 1) {
+            && gfdStatus == 1
+            && voltStatus == 1) {
             stoStatus = IO::GPIO::State::HIGH;
             numAttemptsMade = 0;
         } else {
@@ -128,7 +131,8 @@ void PreCharge::getSTO() {
     } else {
         if (batteryOneOkStatus == IO::GPIO::State::HIGH
             && batteryTwoOkStatus == IO::GPIO::State::HIGH
-            && eStopActiveStatus == IO::GPIO::State::HIGH) {
+            && eStopActiveStatus == IO::GPIO::State::HIGH
+            && voltStatus == 1) {
             stoStatus = IO::GPIO::State::HIGH;
             numAttemptsMade = 0;
         } else {
@@ -371,8 +375,8 @@ void PreCharge::sendChangePDO() {
     IO::CANMessage changePDOMessage(0x48A, 7, &payload[0], false);
     can.transmit(changePDOMessage);
 
-    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; f: %d, pc: %d, dc: %d, c: %d, apm: %d",
-                               state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, contStatus);
+    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; a: %d, pc: %d, dc: %d, c: %d, v: %d",
+                               state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, contStatus, voltStatus);
 }
 
 }// namespace PreCharge

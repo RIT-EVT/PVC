@@ -144,12 +144,13 @@ public:
     PVCStatus handle(IO::UART& uart);
 
     /**
-    * Get the value of STO (Safe to Operate)
-    * 
-    * STO=1 when BATTERY_1_OK=1 AND BATTERY_2_OK=1 AND EMERGENCY_STOP=1
-    * 
-    * @return value of STO, 0 or 1
-    */
+     * Get the value of STO (Safe to Operate)
+     *
+     * TODO: Update documentation
+     * STO=1 when BATTERY_1_OK=1 AND BATTERY_2_OK=1 AND EMERGENCY_STOP=1
+     *
+     * @return value of STO, 0 or 1
+     */
     void getSTO();
 
     /**
@@ -311,6 +312,7 @@ private:
     IO::GPIO::State pcStatus;
     IO::GPIO::State dcStatus;
     uint8_t contStatus;
+    uint8_t voltStatus;
     IO::GPIO::State apmStatus;
 
     uint8_t gfdStatus;
