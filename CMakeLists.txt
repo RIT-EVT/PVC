@@ -42,6 +42,8 @@ add_library(${PROJECT_NAME} STATIC)
 # Add sources
 target_sources(${PROJECT_NAME} PRIVATE
         src/PreCharge/PreCharge.cpp
+        src/PreCharge/PreChargeBase.cpp
+        src/PreCharge/PreChargeKEV1N.cpp
         src/PreCharge/GFDB.cpp
         src/PreCharge/dev/MAX22530.cpp
         src/PreCharge/dev/Contactor.cpp

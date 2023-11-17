@@ -18,21 +18,19 @@ namespace IO = EVT::core::IO;
 namespace PreCharge {
 
 /**
- * Represents the pre-charge controller used for DEV1
+ * Represents the pre-charge controller used for KEV1N
  */
-class PreCharge : public PreChargeBase {
+class PreChargeKEV1N : public PreChargeBase {
 public:
     enum class PVCStatus {
-        PVC_OK = 0u,
-        PVC_ERROR = 1u
+        PVC_OP = 0u,
+        PVC_PRE_OP = 1u,
+        PVC_NONE = 2u
     };
 
     static PVCStatus pvcStatus;
 
-    static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
-
-    static constexpr uint8_t CONST_R = 30;
-    static constexpr float CONST_C = 0.014;
+    static constexpr uint16_t PRECHARGE_DELAY = 2000;      // 2 seconds
 
     /**
      * Constructor for pre-charge state machine
@@ -49,7 +47,7 @@ public:
      * @param[in] gfdb GPIO for gfdb fault signal
      * @param[in] can can instance for CANopen
      */
-    PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
+    PreChargeKEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
               IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
 
@@ -67,24 +65,6 @@ public:
      * @return value of STO, 0 or 1
      */
     void getSTO() override;
-
-    /**
-     * Get the value of the Precharge compared against the ideal precharge voltage curve
-     * 
-     * DONE signifies that the precharge system has reached the target voltage without any errors
-     * OK signifies that the precharge system is not at target voltage and there are no errors
-     * ERROR signifies that the precharge system has either lagged behind or overshot the ideal curve
-     * 
-     * @return int value of PrechargeStatus enum
-    */
-    int getPrechargeStatus();
-
-    /**
-     * Get the current expected voltage based on the current precharge time
-     * 
-     * @return float value of expected voltage in Volts
-    */
-    uint16_t solveForVoltage(uint16_t pack_voltage, uint64_t delta_time);
 
     /**
      * Get the state of MC_KEY_IN
@@ -107,13 +87,6 @@ public:
     void prechargeState() override;
 
     /**
-     * Handles when discharge is to occur.
-     * 
-     * State: State::DISCHARGE
-     */
-    void dischargeState();
-
-    /**
      * Handles when the contactor is to be closed.
      * 
      * State: State::CONT_CLOSE
@@ -121,9 +94,7 @@ public:
     void contCloseState() override;
 
 private:
-    // Status bit to indicate a precharge error
-    // Key must be cycled (on->off->on) to resume state machine
-    uint8_t cycle_key;
+    uint8_t pre_charged;
 };
 
 }// namespace PreCharge
