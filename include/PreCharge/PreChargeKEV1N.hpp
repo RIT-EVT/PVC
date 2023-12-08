@@ -1,7 +1,7 @@
 #pragma once
 
-#include "PreCharge/dev/Contactor.hpp"
 #include "PreCharge/PreChargeBase.hpp"
+#include "PreCharge/dev/Contactor.hpp"
 #include <Canopen/co_core.h>
 #include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
@@ -10,7 +10,6 @@
 #include <EVT/io/pin.hpp>
 #include <PreCharge/GFDB.hpp>
 #include <PreCharge/dev/MAX22530.hpp>
-
 
 #include <math.h>
 
@@ -31,7 +30,7 @@ public:
 
     static PVCStatus pvcStatus;
 
-    static constexpr uint16_t PRECHARGE_DELAY = 2000;      // 2 seconds
+    static constexpr uint16_t PRECHARGE_DELAY = 2000;// 2 seconds
 
     /**
      * Constructor for pre-charge state machine
@@ -49,8 +48,8 @@ public:
      * @param[in] can can instance for CANopen
      */
     PreChargeKEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
+                   IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+                   IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
 
     /**
      * Handler running the pre-charge state switching

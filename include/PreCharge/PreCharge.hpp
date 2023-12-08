@@ -1,7 +1,7 @@
 #pragma once
 
-#include "PreCharge/dev/Contactor.hpp"
 #include "PreCharge/PreChargeBase.hpp"
+#include "PreCharge/dev/Contactor.hpp"
 #include <Canopen/co_core.h>
 #include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
@@ -29,7 +29,7 @@ public:
 
     static PVCStatus pvcStatus;
 
-    static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
+    static constexpr uint16_t DISCHARGE_DELAY = 5250;// 5.25 seconds
 
     static constexpr uint8_t CONST_R = 30;
     static constexpr float CONST_C = 0.014;

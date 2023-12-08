@@ -8,18 +8,18 @@ namespace time = EVT::core::time;
 namespace PreCharge {
 
 PreChargeKEV1N::PreChargeKEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-                     IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-                     IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX) : PreChargeBase(key,
-                                                                                                  batteryOne,
-                                                                                                  batteryTwo,
-                                                                                                  eStop,
-                                                                                                  pc,
-                                                                                                  dc,
-                                                                                                  cont,
-                                                                                                  apm,
-                                                                                                  gfdb,
-                                                                                                  can,
-                                                                                                  MAX) {
+                               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+                               IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX) : PreChargeBase(key,
+                                                                                                            batteryOne,
+                                                                                                            batteryTwo,
+                                                                                                            eStop,
+                                                                                                            pc,
+                                                                                                            dc,
+                                                                                                            cont,
+                                                                                                            apm,
+                                                                                                            gfdb,
+                                                                                                            can,
+                                                                                                            MAX) {
     pre_charged = 2;
 }
 

@@ -119,8 +119,8 @@ public:
      * @param[in] can can instance for CANopen
      */
     PreChargeBase(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
+                  IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+                  IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -194,7 +194,6 @@ public:
      * State: State::ESTOPWAIT
      */
     void eStopState();
-
 
     /**
      * Handles when precharge is to occur.
