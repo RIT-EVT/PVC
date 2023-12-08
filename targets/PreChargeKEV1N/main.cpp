@@ -11,7 +11,7 @@
 #include <EVT/utils/types/FixedQueue.hpp>
 
 #include <PreCharge/GFDB.hpp>
-#include <PreCharge/PreCharge.hpp>
+#include <PreCharge/PreChargeKEV1N.hpp>
 
 namespace IO = EVT::core::IO;
 namespace DEV = EVT::core::DEV;
@@ -139,7 +139,7 @@ int main() {
     IO::GPIO& apm = IO::getGPIO<PreCharge::PreChargeBase::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
     //    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
-    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can, MAX);
+    PreCharge::PreChargeKEV1N precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can, MAX);
 
     ///////////////////////////////////////////////////////////////////////////
     // Setup CAN configuration, this handles making drivers, applying settings.
@@ -188,15 +188,13 @@ int main() {
     pc.writePin(IO::GPIO::State::LOW);
     dc.writePin(IO::GPIO::State::LOW);
 
-    PreCharge::PreCharge::PVCStatus status = PreCharge::PreCharge::PVCStatus::PVC_OK;
-
     while (1) {
-        PreCharge::PreCharge::PVCStatus current_status = precharge.handle(uart);// Update state machine
+        PreCharge::PreChargeKEV1N::PVCStatus current_status = precharge.handle(uart);// Update state machine
 
-        if (current_status == PreCharge::PreCharge::PVCStatus::PVC_ERROR) {
-            status = PreCharge::PreCharge::PVCStatus::PVC_ERROR;
-        } else if (status == PreCharge::PreCharge::PVCStatus::PVC_ERROR && current_status == PreCharge::PreCharge::PVCStatus::PVC_OK) {
-            status = PreCharge::PreCharge::PVCStatus::PVC_OK;
+        if (current_status == PreCharge::PreChargeKEV1N::PVCStatus::PVC_PRE_OP) {
+            CONmtSetMode(&canNode.Nmt, CO_PREOP);
+        } else if (current_status == PreCharge::PreChargeKEV1N::PVCStatus::PVC_OP) {
+            CONmtSetMode(&canNode.Nmt, CO_OPERATIONAL);
         }
 
         // Process incoming CAN messages
