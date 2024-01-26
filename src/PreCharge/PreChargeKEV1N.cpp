@@ -81,7 +81,7 @@ PreChargeKEV1N::PVCStatus PreChargeKEV1N::handle(IO::UART& uart) {
         return PVCStatus::PVC_OP;
     } else if (pre_charged == 0) {
         return PVCStatus::PVC_PRE_OP;
-    } else if (pre_charged == 2) {
+    } else {
         return PVCStatus::PVC_NONE;
     }
 }
