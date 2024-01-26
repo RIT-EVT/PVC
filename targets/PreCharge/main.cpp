@@ -1,6 +1,6 @@
 /**
- * This is the primary State machine handler for the pre-charge voltage controller (PVC) board
- */
+* This is the primary State machine handler for the pre-charge voltage controller (PVC) board
+*/
 
 #include <EVT/io/CANopen.hpp>
 #include <EVT/io/UART.hpp>
@@ -28,15 +28,15 @@ struct CANInterruptParams {
 };
 
 /**
- * Interrupt handler to get CAN messages. A function pointer to this function
- * will be passed to the EVT-core CAN interface which will in turn call this
- * function each time a new CAN message comes in.
- *
- * NOTE: For this sample, every non-extended (so 11 bit CAN IDs) will be
- * assummed to be intended to be passed as a CANopen message.
- *
- * @param message[in] The passed in CAN message that was read.
- */
+* Interrupt handler to get CAN messages. A function pointer to this function
+* will be passed to the EVT-core CAN interface which will in turn call this
+* function each time a new CAN message comes in.
+*
+* NOTE: For this sample, every non-extended (so 11 bit CAN IDs) will be
+* assummed to be intended to be passed as a CANopen message.
+*
+* @param message[in] The passed in CAN message that was read.
+*/
 void canInterruptHandler(IO::CANMessage& message, void* priv) {
     auto* canStruct = (struct CANInterruptParams*) priv;
     if (message.isCANExtended()) {
@@ -89,7 +89,7 @@ int main() {
     EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage> canOpenQueue;
 
     // Initialize CAN, add an IRQ that will populate the above queue
-    IO::CAN& can = IO::getCAN<PreCharge::PreChargeBase::CAN_TX_PIN, PreCharge::PreChargeBase::CAN_RX_PIN>();
+    IO::CAN& can = IO::getCAN<PreCharge::PreCharge::CAN_TX_PIN, PreCharge::PreCharge::CAN_RX_PIN>();
     struct CANInterruptParams canParams = {
         .queue = &canOpenQueue,
         .can = static_cast<IO::CANf3xx*>(&can),
@@ -98,9 +98,9 @@ int main() {
 
     // Initialize MAX22530 and SPI
     IO::GPIO* CSPins[1];
-    CSPins[0] = &IO::getGPIO<PreCharge::PreChargeBase::SPI_CS>(IO::GPIO::Direction::OUTPUT);
+    CSPins[0] = &IO::getGPIO<PreCharge::PreCharge::SPI_CS>(IO::GPIO::Direction::OUTPUT);
     CSPins[0]->writePin(IO::GPIO::State::HIGH);
-    IO::SPI& spi = IO::getSPI<PreCharge::PreChargeBase::SPI_SCK, PreCharge::PreChargeBase::SPI_MOSI, PreCharge::PreChargeBase::SPI_MISO>(CSPins, 1);
+    IO::SPI& spi = IO::getSPI<PreCharge::PreCharge::SPI_SCK, PreCharge::PreCharge::SPI_MOSI, PreCharge::PreCharge::SPI_MISO>(CSPins, 1);
     spi.configureSPI(SPI_SPEED_125KHZ, SPI_MODE0, SPI_MSB_FIRST);
     PreCharge::MAX22530 MAX(spi);
 
@@ -108,7 +108,7 @@ int main() {
     DEV::Timer& timer = DEV::getTimer<DEV::MCUTimer::Timer2>(100);
 
     // Set up Logger
-    IO::UART& uart = IO::getUART<PreCharge::PreChargeBase::UART_TX_PIN, PreCharge::PreChargeBase::UART_RX_PIN>(9600, true);
+    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600, true);
     EVT::core::log::LOGGER.setUART(&uart);
     EVT::core::log::LOGGER.setLogLevel(EVT::core::log::Logger::LogLevel::DEBUG);
     EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Logger initialized.");
@@ -127,16 +127,16 @@ int main() {
     }
 
     // Set up pre_charge
-    IO::GPIO& key = IO::getGPIO<PreCharge::PreChargeBase::KEY_IN_PIN>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& batteryOne = IO::getGPIO<PreCharge::PreChargeBase::BAT_OK_1_PIN>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& batteryTwo = IO::getGPIO<PreCharge::PreChargeBase::BAT_OK_2_PIN>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& eStop = IO::getGPIO<PreCharge::PreChargeBase::ESTOP_IN_PIN>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& pc = IO::getGPIO<PreCharge::PreChargeBase::PC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
-    IO::GPIO& dc = IO::getGPIO<PreCharge::PreChargeBase::DC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& key = IO::getGPIO<PreCharge::PreCharge::KEY_IN_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& batteryOne = IO::getGPIO<PreCharge::PreCharge::BAT_OK_1_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& batteryTwo = IO::getGPIO<PreCharge::PreCharge::BAT_OK_2_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& eStop = IO::getGPIO<PreCharge::PreCharge::ESTOP_IN_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& pc = IO::getGPIO<PreCharge::PreCharge::PC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
+    IO::GPIO& dc = IO::getGPIO<PreCharge::PreCharge::DC_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
     PreCharge::Contactor cont(
-        IO::getGPIO<PreCharge::PreChargeBase::CONT1_PIN>(IO::GPIO::Direction::OUTPUT),
-        IO::getGPIO<PreCharge::PreChargeBase::CONT2_PIN>(IO::GPIO::Direction::OUTPUT));
-    IO::GPIO& apm = IO::getGPIO<PreCharge::PreChargeBase::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
+        IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>(IO::GPIO::Direction::OUTPUT),
+        IO::getGPIO<PreCharge::PreCharge::CONT2_PIN>(IO::GPIO::Direction::OUTPUT));
+    IO::GPIO& apm = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
     //    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
     PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can, MAX);
@@ -162,7 +162,7 @@ int main() {
     canStackDriver.Nvm = &nvmDriver;
 
     CO_NODE_SPEC canSpec = {
-        .NodeId = PreCharge::PreChargeBase::NODE_ID,
+        .NodeId = PreCharge::PreCharge::NODE_ID,
         .Baudrate = IO::CAN::DEFAULT_BAUD,
         .Dict = precharge.getObjectDictionary(),
         .DictLen = precharge.getObjectDictionarySize(),
