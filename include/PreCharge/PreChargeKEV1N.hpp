@@ -95,6 +95,11 @@ public:
     static constexpr uint16_t PRECHARGE_DELAY = 2000;      // 2 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
 
+    static constexpr uint8_t MIN_PACK_VOLTAGE = 70;
+
+    static constexpr uint8_t CONST_R = 30;
+    static constexpr float CONST_C = 0.014;
+
     /**
      * Number of attempts that will be made to check the STO status
      * before failing
