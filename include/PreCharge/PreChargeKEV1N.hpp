@@ -19,7 +19,7 @@ namespace PreCharge {
 /**
  * Represents the pre-charge controller used for DEV1
  */
-class PreCharge {
+class PreChargeKEV1N {
 public:
     /**
      * Binary representation of the states that the pre-charge controller can be in
@@ -76,8 +76,9 @@ public:
     };
 
     enum class PVCStatus {
-        PVC_OK = 0u,
-        PVC_ERROR = 1u
+        PVC_OP = 0u,
+        PVC_PRE_OP = 1u,
+        PVC_NONE = 2u
     };
 
     static PVCStatus pvcStatus;
@@ -91,7 +92,7 @@ public:
     uint64_t changePDO;
     uint64_t cyclicPDO;
 
-    static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
+    static constexpr uint16_t PRECHARGE_DELAY = 2000;      // 2 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
 
     static constexpr uint8_t MIN_PACK_VOLTAGE = 70;
@@ -129,9 +130,9 @@ public:
      * @param[in] gfdb GPIO for gfdb fault signal
      * @param[in] can can instance for CANopen
      */
-    PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
+    PreChargeKEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
+                   IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+                   IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -318,9 +319,7 @@ private:
     uint8_t gfdStatus;
     uint32_t lastPrechargeTime;
 
-    // Status bit to indicate a precharge error
-    // Key must be cycled (on->off->on) to resume state machine
-    uint8_t cycle_key;
+    uint8_t pre_charged;
 
     State state;
     State prevState;
