@@ -188,16 +188,8 @@ int main() {
     pc.writePin(IO::GPIO::State::LOW);
     dc.writePin(IO::GPIO::State::LOW);
 
-    PreCharge::PreCharge::PVCStatus status = PreCharge::PreCharge::PVCStatus::PVC_OK;
-
     while (1) {
-        PreCharge::PreCharge::PVCStatus current_status = precharge.handle(uart);// Update state machine
-
-        if (current_status == PreCharge::PreCharge::PVCStatus::PVC_ERROR) {
-            status = PreCharge::PreCharge::PVCStatus::PVC_ERROR;
-        } else if (status == PreCharge::PreCharge::PVCStatus::PVC_ERROR && current_status == PreCharge::PreCharge::PVCStatus::PVC_OK) {
-            status = PreCharge::PreCharge::PVCStatus::PVC_OK;
-        }
+        PreCharge::PreCharge::PVCStatus current_status = precharge.handle();// Update state machine
 
         // Process incoming CAN messages
         CONodeProcess(&canNode);

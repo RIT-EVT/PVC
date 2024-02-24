@@ -80,8 +80,6 @@ public:
         PVC_ERROR = 1u
     };
 
-    static PVCStatus pvcStatus;
-
     uint8_t Statusword;//8
 
     uint64_t InputVoltage; //16
@@ -140,8 +138,10 @@ public:
 
     /**
      * Handler running the pre-charge state switching
+     *
+     * @return the current status of the PVC, either PVC_OK or PVC_Error
      */
-    PVCStatus handle(IO::UART& uart);
+    PVCStatus handle();
 
     /**
      * Get the value of STO (Safe to Operate)
