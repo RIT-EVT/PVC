@@ -358,8 +358,12 @@ CO_OBJ_T* PreCharge::getObjectDictionary() {
     return &objectDictionary[0];
 }
 
-uint16_t PreCharge::getObjectDictionarySize() {
+uint8_t PreCharge::getNumElements() {
     return OBJECT_DICTIONARY_SIZE;
+}
+
+uint8_t PreCharge::getNodeID() {
+    return NODE_ID;
 }
 
 void PreCharge::sendChangePDO() {
