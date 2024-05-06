@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PreCharge/dev/Contactor.hpp"
+#include <PreCharge/dev/Contactor.hpp>
 #include <co_core.h>
 #include <EVT/io/CAN.hpp>
 #include <EVT/io/GPIO.hpp>
@@ -9,7 +9,7 @@
 #include <EVT/io/pin.hpp>
 #include <PreCharge/GFDB.hpp>
 #include <PreCharge/dev/MAX22530.hpp>
-#include <EVT/io/CANopenMacros.hpp>
+#include <EVT/io/CANOpenMacros.hpp>
 #include <EVT/io/CANDevice.hpp>
 
 #include <math.h>
