@@ -1,16 +1,16 @@
 #pragma once
 
-#include <PreCharge/dev/Contactor.hpp>
-#include <co_core.h>
 #include <EVT/io/CAN.hpp>
+#include <EVT/io/CANDevice.hpp>
+#include <EVT/io/CANOpenMacros.hpp>
 #include <EVT/io/GPIO.hpp>
 #include <EVT/io/SPI.hpp>
 #include <EVT/io/UART.hpp>
 #include <EVT/io/pin.hpp>
 #include <PreCharge/GFDB.hpp>
+#include <PreCharge/dev/Contactor.hpp>
 #include <PreCharge/dev/MAX22530.hpp>
-#include <EVT/io/CANOpenMacros.hpp>
-#include <EVT/io/CANDevice.hpp>
+#include <co_core.h>
 
 #include <math.h>
 
@@ -21,7 +21,7 @@ namespace PreCharge {
 /**
  * Represents the pre-charge controller used for DEV1
  */
-class PreCharge: public CANDevice {
+class PreCharge : public CANDevice {
 public:
     /**
      * Binary representation of the states that the pre-charge controller can be in
