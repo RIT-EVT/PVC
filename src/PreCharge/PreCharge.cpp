@@ -42,7 +42,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     sendChangePDO();
 }
 
-PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
+PreCharge::PVCStatus PreCharge::handle() {
     getSTO();     //update value of STO
     getMCKey();   //update value of MC_KEY_IN
     getIOStatus();//update value of IOStatus
@@ -358,8 +358,12 @@ CO_OBJ_T* PreCharge::getObjectDictionary() {
     return &objectDictionary[0];
 }
 
-uint16_t PreCharge::getObjectDictionarySize() {
+uint8_t PreCharge::getNumElements() {
     return OBJECT_DICTIONARY_SIZE;
+}
+
+uint8_t PreCharge::getNodeID() {
+    return NODE_ID;
 }
 
 void PreCharge::sendChangePDO() {

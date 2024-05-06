@@ -1,14 +1,16 @@
 #pragma once
 
-#include "PreCharge/dev/Contactor.hpp"
-#include <Canopen/co_core.h>
 #include <EVT/io/CAN.hpp>
+#include <EVT/io/CANDevice.hpp>
+#include <EVT/io/CANOpenMacros.hpp>
 #include <EVT/io/GPIO.hpp>
 #include <EVT/io/SPI.hpp>
 #include <EVT/io/UART.hpp>
 #include <EVT/io/pin.hpp>
 #include <PreCharge/GFDB.hpp>
+#include <PreCharge/dev/Contactor.hpp>
 #include <PreCharge/dev/MAX22530.hpp>
+#include <co_core.h>
 
 #include <math.h>
 
@@ -19,7 +21,7 @@ namespace PreCharge {
 /**
  * Represents the pre-charge controller used for DEV1
  */
-class PreCharge {
+class PreCharge : public CANDevice {
 public:
     /**
      * Binary representation of the states that the pre-charge controller can be in
@@ -80,8 +82,6 @@ public:
         PVC_ERROR = 1u
     };
 
-    static PVCStatus pvcStatus;
-
     uint8_t Statusword;//8
 
     uint64_t InputVoltage; //16
@@ -140,8 +140,10 @@ public:
 
     /**
      * Handler running the pre-charge state switching
+     *
+     * @return the current status of the PVC, either PVC_OK or PVC_Error
      */
-    PVCStatus handle(IO::UART& uart);
+    PVCStatus handle();
 
     /**
      * Get the value of STO (Safe to Operate)
@@ -264,19 +266,11 @@ public:
      */
     void forwardDisableState();
 
-    /**
-     * Get a pointer to the start of the CANopen object dictionary.
-     *
-     * @return Pointer to the start of the CANopen object dictionary.
-     */
-    CO_OBJ_T* getObjectDictionary();
+    CO_OBJ_T* getObjectDictionary() override;
 
-    /**
-     * Get the number of elements in the object dictionary.
-     *
-     * @return The number of elements in the object dictionary
-     */
-    uint16_t getObjectDictionarySize();
+    uint8_t getNumElements() override;
+
+    uint8_t getNodeID() override;
 
 private:
     /** GPIO instance to monitor KEY_IN */
@@ -337,7 +331,7 @@ private:
      * Have to know the size of the object dictionary for initialization
      * process.
      */
-    static constexpr uint8_t OBJECT_DICTIONARY_SIZE = 19;
+    static constexpr uint8_t OBJECT_DICTIONARY_SIZE = 22;
 
     /**
      * The object dictionary itself. Will be populated by this object during
@@ -346,55 +340,11 @@ private:
      * The plus one is for the special "end of dictionary" marker.
      */
     CO_OBJ_T objectDictionary[OBJECT_DICTIONARY_SIZE + 1] = {
-        // Sync ID, defaults to 0x80
-        {CO_KEY(0x1005, 0, CO_UNSIGNED32 | CO_OBJ_D__R_), nullptr, (uintptr_t) 0x80},
 
-        // Enable heartbeat
-        {
-            CO_KEY(0x1017, 0, CO_UNSIGNED16 | CO_OBJ_D__R_),
-            CO_THB_PROD,
-            (uintptr_t) 100,
-        },
-
-        // Information about the hardware, hard coded sample values for now
-        // 1: Vendor ID
-        // 2: Product Code
-        // 3: Revision Number
-        // 4: Serial Number
-        {
-            .Key = CO_KEY(0x1018, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 0x10,
-        },
-        {
-            .Key = CO_KEY(0x1018, 2, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 0x11,
-        },
-        {
-            .Key = CO_KEY(0x1018, 3, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 0x12,
-        },
-        {
-            .Key = CO_KEY(0x1018, 4, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 0x13,
-        },
-
-        // SDO CAN message IDS.
-        // 1: Client -> Server ID, default is 0x600 + NODE_ID
-        // 2: Server -> Client ID, default is 0x580 + NODE_ID
-        {
-            .Key = CO_KEY(0x1200, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 0x600 + NODE_ID,
-        },
-        {
-            .Key = CO_KEY(0x1200, 2, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 0x580 + NODE_ID,
-        },
+        MANDATORY_IDENTIFICATION_ENTRIES_1000_1014,
+        HEARTBEAT_PRODUCER_1017(2000),
+        IDENTITY_OBJECT_1018,
+        SDO_CONFIGURATION_1200,
 
         // TPDO0 settings
         // 0: The TPDO number, default 0
@@ -402,61 +352,24 @@ private:
         // 2: How the TPO is triggered, default to manual triggering
         // 3: Inhibit time, defaults to 0
         // 5: Timer trigger time in 1ms units, 0 will disable the timer based triggering
-        {
-            .Key = CO_KEY(0x1800, 0, CO_UNSIGNED8 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 0,
-        },
-        {
-            .Key = CO_KEY(0x1800, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) CO_COBID_TPDO_DEFAULT(0) + NODE_ID,
-        },
-        {
-            .Key = CO_KEY(0x1800, 2, CO_UNSIGNED8 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 0xFE,
-        },
-        {
-            .Key = CO_KEY(0x1800, 3, CO_UNSIGNED16 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 0,
-        },
-        {
-            .Key = CO_KEY(0x1800, 5, CO_UNSIGNED16 | CO_OBJ_D__R_),
-            .Type = CO_TEVENT,
-            .Data = (uintptr_t) 2000,
-        },
+
+        TRANSMIT_PDO_SETTINGS_OBJECT_18XX(0x00, TRANSMIT_PDO_TRIGGER_TIMER, TRANSMIT_PDO_INHIBIT_TIME_DISABLE, 2000),
 
         // TPDO0 mapping, determines the PDO messages to send when TPDO1 is triggered
         // 0: The number of PDO message associated with the TPDO
         // 1: Link to the first PDO message
         // n: Link to the nth PDO message
-        {
-            .Key = CO_KEY(0x1A00, 0, CO_UNSIGNED8 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = (uintptr_t) 1},
-        {
-            .Key = CO_KEY(0x1A00, 1, CO_UNSIGNED32 | CO_OBJ_D__R_),
-            .Type = nullptr,
-            .Data = CO_LINK(0x2100, 0, 8)// Link to sample data position in dictionary
-        },
+
+        TRANSMIT_PDO_MAPPING_START_KEY_1AXX(0x00, 0x01),
+        TRANSMIT_PDO_MAPPING_ENTRY_1AXX(0x00, 0x01, PDO_MAPPING_UNSIGNED8),
 
         // User defined data, this will be where we put elements that can be
         // accessed via SDO and depeneding on configuration PDO
-        {
-            .Key = CO_KEY(0x2100, 0, CO_UNSIGNED8 | CO_OBJ___PRW),
-            .Type = nullptr,
-            .Data = (uintptr_t) &state,
-        },
-        {
-            .Key = CO_KEY(0x1017, 0, CO_UNSIGNED16 | CO_OBJ_D__R_),
-            .Type = CO_THB_PROD,
-            .Data = (uintptr_t) 1000,
-        },
+        DATA_LINK_START_KEY_21XX(0, 0x01),
+        DATA_LINK_21XX(0x00, 0x01, CO_TUNSIGNED8, &state),
 
         // End of dictionary marker
-        CO_OBJ_DIR_ENDMARK,
+        CO_OBJ_DICT_ENDMARK,
     };
 };
 

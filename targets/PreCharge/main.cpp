@@ -50,37 +50,6 @@ void canInterruptHandler(IO::CANMessage& message, void* priv) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// CANopen specific Callbacks. Need to be defined in some location
-///////////////////////////////////////////////////////////////////////////////
-extern "C" void CONodeFatalError(void) {
-    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Fatal CANopen error");
-}
-
-extern "C" void COIfCanReceive(CO_IF_FRM* frm) {}
-
-extern "C" int16_t COLssStore(uint32_t baudrate, uint8_t nodeId) { return 0; }
-
-extern "C" int16_t COLssLoad(uint32_t* baudrate, uint8_t* nodeId) { return 0; }
-
-extern "C" void CONmtModeChange(CO_NMT* nmt, CO_MODE mode) {}
-
-extern "C" void CONmtHbConsEvent(CO_NMT* nmt, uint8_t nodeId) {}
-
-extern "C" void CONmtHbConsChange(CO_NMT* nmt, uint8_t nodeId, CO_MODE mode) {}
-
-extern "C" int16_t COParaDefault(CO_PARA* pg) { return 0; }
-
-extern "C" void COPdoTransmit(CO_IF_FRM* frm) {}
-
-extern "C" int16_t COPdoReceive(CO_IF_FRM* frm) { return 0; }
-
-extern "C" void COPdoSyncUpdate(CO_RPDO* pdo) {}
-
-extern "C" void COTmrLock(void) {}
-
-extern "C" void COTmrUnlock(void) {}
-
 int main() {
     // Initialize system
     EVT::core::platform::init();
@@ -115,8 +84,8 @@ int main() {
     timer.stopTimer();
 
     // Reserved memory for CANopen stack usage
-    uint8_t sdoBuffer[1][CO_SDO_BUF_BYTE];
-    CO_TMR_MEM appTmrMem[4];
+    uint8_t sdoBuffer[CO_SSDO_N * CO_SDO_BUF_BYTE];
+    CO_TMR_MEM appTmrMem[16];
 
     // Attempt to join the CAN network
     IO::CAN::CANStatus result = can.connect();
@@ -147,37 +116,23 @@ int main() {
     // between the application (the code we write) and the physical CAN network
     ///////////////////////////////////////////////////////////////////////////
     // Make drivers
+
+    // Reserve driver variables
     CO_IF_DRV canStackDriver;
 
     CO_IF_CAN_DRV canDriver;
     CO_IF_TIMER_DRV timerDriver;
     CO_IF_NVM_DRV nvmDriver;
 
-    IO::getCANopenCANDriver(&can, &canOpenQueue, &canDriver);
-    IO::getCANopenTimerDriver(&timer, &timerDriver);
-    IO::getCANopenNVMDriver(&nvmDriver);
-
-    canStackDriver.Can = &canDriver;
-    canStackDriver.Timer = &timerDriver;
-    canStackDriver.Nvm = &nvmDriver;
-
-    CO_NODE_SPEC canSpec = {
-        .NodeId = PreCharge::PreCharge::NODE_ID,
-        .Baudrate = IO::CAN::DEFAULT_BAUD,
-        .Dict = precharge.getObjectDictionary(),
-        .DictLen = precharge.getObjectDictionarySize(),
-        .EmcyCode = nullptr,
-        .TmrMem = appTmrMem,
-        .TmrNum = 16,
-        .TmrFreq = 100,
-        .Drv = &canStackDriver,
-        .SdoBuf = reinterpret_cast<uint8_t*>(&sdoBuffer[0]),
-    };
-
     CO_NODE canNode;
 
-    CONodeInit(&canNode, &canSpec);
-    CONodeStart(&canNode);
+    // Initialize all the CANOpen drivers.
+    IO::initializeCANopenDriver(&canOpenQueue, &can, &timer, &canStackDriver, &nvmDriver, &timerDriver, &canDriver);
+
+    // Initialize the CANOpen node we are using.
+    IO::initializeCANopenNode(&canNode, &precharge, &canStackDriver, sdoBuffer, appTmrMem);
+
+    // Set the node to operational mode
     CONmtSetMode(&canNode.Nmt, CO_OPERATIONAL);
 
     time::wait(500);
@@ -188,16 +143,8 @@ int main() {
     pc.writePin(IO::GPIO::State::LOW);
     dc.writePin(IO::GPIO::State::LOW);
 
-    PreCharge::PreCharge::PVCStatus status = PreCharge::PreCharge::PVCStatus::PVC_OK;
-
     while (1) {
-        PreCharge::PreCharge::PVCStatus current_status = precharge.handle(uart);// Update state machine
-
-        if (current_status == PreCharge::PreCharge::PVCStatus::PVC_ERROR) {
-            status = PreCharge::PreCharge::PVCStatus::PVC_ERROR;
-        } else if (status == PreCharge::PreCharge::PVCStatus::PVC_ERROR && current_status == PreCharge::PreCharge::PVCStatus::PVC_OK) {
-            status = PreCharge::PreCharge::PVCStatus::PVC_OK;
-        }
+        PreCharge::PreCharge::PVCStatus current_status = precharge.handle();// Update state machine
 
         // Process incoming CAN messages
         CONodeProcess(&canNode);
