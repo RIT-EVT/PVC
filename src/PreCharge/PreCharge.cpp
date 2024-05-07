@@ -270,7 +270,17 @@ void PreCharge::eStopState() {
         }
         prevState = state;
     }
-    //else stay on E-Stop
+    // Else stay on E-Stop
+
+    // If E-stop is pressed and key is turned, send BMS reset message
+    // Need to reread key to get around cycle requirement
+    if (eStopActiveStatus == IO::GPIO::State::LOW && key.readPin() == IO::GPIO::State::HIGH) {
+        uint8_t payload[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        IO::CANMessage bmsResetMessage(0x7FF, 8, payload, false);
+        for (uint8_t i = 0; i < 5; i++) {
+            can.transmit(bmsResetMessage);
+        }
+    }
 }
 
 void PreCharge::prechargeState() {
