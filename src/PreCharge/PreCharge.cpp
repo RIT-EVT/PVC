@@ -117,8 +117,10 @@ void PreCharge::getSTO() {
             stoStatus = IO::GPIO::State::HIGH;
             numAttemptsMade = 0;
         } else {
-            if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+            // If ESTOP is active, stop immediately; otherwise, give the error attempts to clear
+            if (numAttemptsMade > MAX_STO_ATTEMPTS || eStopActiveStatus == IO::GPIO::State::LOW) {
                 EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
                 cycle_key = 1;
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
@@ -136,8 +138,10 @@ void PreCharge::getSTO() {
             stoStatus = IO::GPIO::State::HIGH;
             numAttemptsMade = 0;
         } else {
-            if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+            // If ESTOP is active, stop immediately; otherwise, give the error attempts to clear
+            if (numAttemptsMade > MAX_STO_ATTEMPTS || eStopActiveStatus == IO::GPIO::State::LOW) {
                 EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
                 cycle_key = 1;
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
