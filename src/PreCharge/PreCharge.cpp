@@ -190,6 +190,10 @@ uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) 
     return initVolt + ((pack_voltage - initVolt) * (1 - exp(-(delta_time / (1000 * 30 * 0.014)))));
 }
 
+uint16_t PreCharge::solveForTemp(uint16_t thermistor_voltage) {
+    return (60.9771 * pow(thermistor_voltage, 3)) + (-411.668 * pow(thermistor_voltage, 2)) + (939.874 * thermistor_voltage) - 678.944;
+}
+
 void PreCharge::getMCKey() {
     if (cycle_key) {
         if (key.readPin() == IO::GPIO::State::LOW) {

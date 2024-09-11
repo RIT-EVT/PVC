@@ -62,6 +62,7 @@ public:
     static constexpr IO::Pin SPI_MISO = IO::Pin::PA_6;
     static constexpr IO::Pin SPI_SCK = IO::Pin::PA_5;
     static constexpr IO::Pin SPI_INT = IO::Pin::PA_8;
+    static constexpr IO::Pin DCR_IN = IO::Pin::PA_0;
 
     enum class PinStatus {
         DISABLE = 0u,
@@ -175,6 +176,8 @@ public:
      * @return float value of expected voltage in Volts
     */
     uint16_t solveForVoltage(uint16_t pack_voltage, uint64_t delta_time);
+
+    uint16_t solveForTemp(uint16_t thermistor_voltage);
 
     /**
      * Get the state of MC_KEY_IN
