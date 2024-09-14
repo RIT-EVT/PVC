@@ -138,9 +138,10 @@ int main() {
         IO::getGPIO<PreCharge::PreCharge::CONT2_PIN>(IO::GPIO::Direction::OUTPUT));
     IO::GPIO& apm = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
     IO::ADC& dcr = IO::getADC<PreCharge::PreCharge::DCR_IN>();
+    DEV::Thermistor thermistor {dcr, PreCharge::PreCharge::solveForTemp};
     //    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
-    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can, dcr, MAX);
+    PreCharge::PreCharge precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can, thermistor, MAX);
 
     ///////////////////////////////////////////////////////////////////////////
     // Setup CAN configuration, this handles making drivers, applying settings.

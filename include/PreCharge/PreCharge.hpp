@@ -8,12 +8,14 @@
 #include <EVT/io/UART.hpp>
 #include <EVT/io/pin.hpp>
 #include <EVT/io/ADC.hpp>
+#include <EVT/dev/Thermistor.hpp>
 #include <PreCharge/GFDB.hpp>
 #include <PreCharge/dev/MAX22530.hpp>
 
 #include <math.h>
 
 namespace IO = EVT::core::IO;
+namespace DEV = EVT::core::DEV;
 
 namespace PreCharge {
 
@@ -134,7 +136,7 @@ public:
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, IO::ADC& dcr,
+              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, DEV::Thermistor thermistor,
               MAX22530 MAX);
 
     /**
@@ -181,11 +183,11 @@ public:
     uint16_t solveForVoltage(uint16_t pack_voltage, uint64_t delta_time);
 
     /**
-     * Get the current temperature of the thermistor from its measured voltage
+     * ADC to temperature conversion function for the thermistor used on the PVC
      *
-     * @return temperature in millicentigrade
+     * @return temperature in milli celsius
      */
-    uint32_t solveForTemp(float thermistor_voltage);
+    static uint32_t solveForTemp(uint32_t thermistor_voltage);
 
     /**
      * Get the state of MC_KEY_IN
@@ -312,8 +314,8 @@ private:
     GFDB::GFDB& gfdb;
     /** CAN instance to handle CANOpen processes*/
     IO::CAN& can;
-    /** ADC instance to read voltage from MCU_DCR_IN */
-    IO::ADC& dcr;
+    /** Thermistor instance to control the precharge temperature */
+    DEV::Thermistor thermistor;
 
     MAX22530 MAX;
 

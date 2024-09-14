@@ -10,8 +10,8 @@ namespace PreCharge {
 
 PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                      IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-                     IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, IO::ADC& dcr,
-                     MAX22530 MAX) :                                                key(key),
+                     IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can,
+                     DEV::Thermistor thermistor, MAX22530 MAX) :                    key(key),
                                                                                     batteryOne(batteryOne),
                                                                                     batteryTwo(batteryTwo),
                                                                                     eStop(eStop),
@@ -21,7 +21,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                                                                                     apm(apm),
                                                                                     gfdb(gfdb),
                                                                                     can(can),
-                                                                                    dcr(dcr),
+                                                                                    thermistor(thermistor),
                                                                                     MAX(MAX) {
     state = State::MC_OFF;
     prevState = State::MC_OFF;
@@ -192,11 +192,11 @@ uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) 
     return initVolt + ((pack_voltage - initVolt) * (1 - exp(-(delta_time / (1000 * 30 * 0.014)))));
 }
 
-uint32_t PreCharge::solveForTemp(float thermistor_voltage) {
-    return (uint32_t)(60977 * pow(thermistor_voltage, 3) + (-411668 * pow(thermistor_voltage, 2)) + 939874 * thermistor_voltage - 678944);
+uint32_t PreCharge::solveForTemp(uint32_t thermistor_voltage) {
+    return (uint32_t)(0.0000319115 * pow(thermistor_voltage, 3) + (-0.267342 * pow(thermistor_voltage, 2)) + 757.407 * thermistor_voltage - 678944);
 }
 
-void PreCharge::getMCKey() {
+    void PreCharge::getMCKey() {
     if (cycle_key) {
         if (key.readPin() == IO::GPIO::State::LOW) {
             cycle_key = 0;
