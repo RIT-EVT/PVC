@@ -7,6 +7,7 @@
 #include <EVT/io/SPI.hpp>
 #include <EVT/io/UART.hpp>
 #include <EVT/io/pin.hpp>
+#include <EVT/io/ADC.hpp>
 #include <PreCharge/GFDB.hpp>
 #include <PreCharge/dev/MAX22530.hpp>
 
@@ -128,11 +129,13 @@ public:
      * @param[in] apm GPIO for apm control
      * @param[in] forward GPIO for forward enable
      * @param[in] gfdb GPIO for gfdb fault signal
+     * @param[in] dcr ADC for MCU_DCR voltage
      * @param[in] can can instance for CANopen
      */
     PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
+              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, IO::ADC& dcr,
+              MAX22530 MAX);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -177,7 +180,12 @@ public:
     */
     uint16_t solveForVoltage(uint16_t pack_voltage, uint64_t delta_time);
 
-    uint16_t solveForTemp(uint16_t thermistor_voltage);
+    /**
+     * Get the current temperature of the thermistor from its measured voltage
+     *
+     * @return temperature in millicentigrade
+     */
+    uint32_t solveForTemp(float thermistor_voltage);
 
     /**
      * Get the state of MC_KEY_IN
@@ -304,6 +312,8 @@ private:
     GFDB::GFDB& gfdb;
     /** CAN instance to handle CANOpen processes*/
     IO::CAN& can;
+    /** ADC instance to read voltage from MCU_DCR_IN */
+    IO::ADC& dcr;
 
     MAX22530 MAX;
 
