@@ -193,6 +193,9 @@ int main() {
     PreCharge::PreCharge::PVCStatus status = PreCharge::PreCharge::PVCStatus::PVC_OK;
 
     while (1) {
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Thermistor temp: %dmC",
+                                   static_cast<int>(thermistor.getTempCelcius()));
+
         PreCharge::PreCharge::PVCStatus current_status = precharge.handle(uart);// Update state machine
 
         if (current_status == PreCharge::PreCharge::PVCStatus::PVC_ERROR) {
