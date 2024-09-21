@@ -1,12 +1,12 @@
+#include "PVC/PVC.hpp"
 #include <EVT/manager.hpp>
-#include <PreCharge/PreCharge.hpp>
-#include <PreCharge/dev/Contactor.hpp>
+#include <PVC/dev/Contactor.hpp>
 
 int main() {
     EVT::core::platform::init();
 
-    PreCharge::Contactor cont(IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>(),
-                              IO::getGPIO<PreCharge::PreCharge::CONT2_PIN>());
+    PVC::Contactor cont(IO::getGPIO<PVC::PVC::CONT1_PIN>(),
+                              IO::getGPIO<PVC::PVC::CONT2_PIN>());
 
     uint8_t i = 0;
     while (1) {

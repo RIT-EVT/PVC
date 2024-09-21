@@ -4,7 +4,7 @@
 
 namespace IO = EVT::core::IO;
 
-namespace PreCharge {
+namespace PVC {
 
 /**
  * Handles reading voltage data from the MAX22530 ADC
@@ -33,4 +33,4 @@ private:
     static uint8_t convertToVoltage(uint16_t count);
 };
 
-}// namespace PreCharge
+}// namespace PVC

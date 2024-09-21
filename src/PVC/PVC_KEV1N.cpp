@@ -1,4 +1,4 @@
-#include <PreCharge/PreChargeKEV1N.hpp>
+#include <PVC/PVC_KEV1N.hpp>
 
 #include <EVT/utils/log.hpp>
 #include <EVT/utils/time.hpp>
@@ -6,9 +6,9 @@
 namespace IO = EVT::core::IO;
 namespace time = EVT::core::time;
 
-namespace PreCharge {
+namespace PVC {
 
-PreChargeKEV1N::PreChargeKEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
+PVC_KEV1N::PVC_KEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
                                IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
                                IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX) : key(key),
                                                                                               batteryOne(batteryOne),
@@ -42,7 +42,7 @@ PreChargeKEV1N::PreChargeKEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& ba
     sendChangePDO();
 }
 
-PreChargeKEV1N::PVCStatus PreChargeKEV1N::handle(IO::UART& uart) {
+PVC_KEV1N::PVCStatus PVC_KEV1N::handle(IO::UART& uart) {
     getSTO();     //update value of STO
     getMCKey();   //update value of MC_KEY_IN
     getIOStatus();//update value of IOStatus
@@ -55,22 +55,22 @@ PreChargeKEV1N::PVCStatus PreChargeKEV1N::handle(IO::UART& uart) {
     cyclicPDO = (InputVoltage << 32) | (OutputVoltage << 16) | BasePTemp;
 
     switch (state) {
-    case PreChargeKEV1N::State::MC_OFF:
+    case PVC_KEV1N::State::MC_OFF:
         mcOffState();
         break;
-    case PreChargeKEV1N::State::ESTOPWAIT:
+    case PVC_KEV1N::State::ESTOPWAIT:
         eStopState();
         break;
-    case PreChargeKEV1N::State::PRECHARGE:
+    case PVC_KEV1N::State::PRECHARGE:
         prechargeState();
         break;
-    case PreChargeKEV1N::State::CONT_CLOSE:
+    case PVC_KEV1N::State::CONT_CLOSE:
         contCloseState();
         break;
-    case PreChargeKEV1N::State::MC_ON:
+    case PVC_KEV1N::State::MC_ON:
         mcOnState();
         break;
-    case PreChargeKEV1N::State::CONT_OPEN:
+    case PVC_KEV1N::State::CONT_OPEN:
         contOpenState();
         break;
     default:
@@ -86,7 +86,7 @@ PreChargeKEV1N::PVCStatus PreChargeKEV1N::handle(IO::UART& uart) {
     }
 }
 
-void PreChargeKEV1N::getSTO() {
+void PVC_KEV1N::getSTO() {
     if (in_precharge == 2 && time::millis() - lastPrechargeTime > 5000) {
         uint8_t gfdBuffer;
         IO::CAN::CANStatus gfdbConn = gfdb.requestIsolationState(&gfdBuffer);
@@ -144,17 +144,17 @@ void PreChargeKEV1N::getSTO() {
     }
 }
 
-void PreChargeKEV1N::getMCKey() {
+void PVC_KEV1N::getMCKey() {
     keyInStatus = key.readPin();
 }
 
-void PreChargeKEV1N::getIOStatus() {
+void PVC_KEV1N::getIOStatus() {
     pcStatus = pc.readPin();
     dcStatus = dc.readPin();
     apmStatus = apm.readPin();
 }
 
-void PreChargeKEV1N::setPrecharge(PreChargeKEV1N::PinStatus state) {
+void PVC_KEV1N::setPrecharge(PVC_KEV1N::PinStatus state) {
     if (static_cast<uint8_t>(state)) {
         pc.writePin(IO::GPIO::State::HIGH);
     } else {
@@ -162,7 +162,7 @@ void PreChargeKEV1N::setPrecharge(PreChargeKEV1N::PinStatus state) {
     }
 }
 
-void PreChargeKEV1N::setDischarge(PreChargeKEV1N::PinStatus state) {
+void PVC_KEV1N::setDischarge(PVC_KEV1N::PinStatus state) {
     if (static_cast<uint8_t>(state)) {
         dc.writePin(IO::GPIO::State::HIGH);
     } else {
@@ -170,7 +170,7 @@ void PreChargeKEV1N::setDischarge(PreChargeKEV1N::PinStatus state) {
     }
 }
 
-void PreChargeKEV1N::setAPM(PreChargeKEV1N::PinStatus state) {
+void PVC_KEV1N::setAPM(PVC_KEV1N::PinStatus state) {
     if (static_cast<uint8_t>(state)) {
         apm.writePin(IO::GPIO::State::HIGH);
     } else {
@@ -178,7 +178,7 @@ void PreChargeKEV1N::setAPM(PreChargeKEV1N::PinStatus state) {
     }
 }
 
-void PreChargeKEV1N::mcOffState() {
+void PVC_KEV1N::mcOffState() {
     in_precharge = 0;
     if (stoStatus == IO::GPIO::State::LOW) {
         state = State::ESTOPWAIT;
@@ -197,7 +197,7 @@ void PreChargeKEV1N::mcOffState() {
     //else stay on MC_OFF
 }
 
-void PreChargeKEV1N::mcOnState() {
+void PVC_KEV1N::mcOnState() {
     pre_charged = 2;
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
@@ -209,7 +209,7 @@ void PreChargeKEV1N::mcOnState() {
     //else stay on MC_ON
 }
 
-void PreChargeKEV1N::eStopState() {
+void PVC_KEV1N::eStopState() {
     if (stoStatus == IO::GPIO::State::HIGH) {
         state = State::MC_OFF;
         if (prevState != state) {
@@ -220,9 +220,9 @@ void PreChargeKEV1N::eStopState() {
     //else stay on E-Stop
 }
 
-void PreChargeKEV1N::prechargeState() {
+void PVC_KEV1N::prechargeState() {
     //Set apm relay
-    setAPM(PreChargeKEV1N::PinStatus::ENABLE);
+    setAPM(PVC_KEV1N::PinStatus::ENABLE);
     //Send Pre-op
     pre_charged = 0;
     //Wait 2 seconds
@@ -239,7 +239,7 @@ void PreChargeKEV1N::prechargeState() {
     prevState = state;
 }
 
-void PreChargeKEV1N::contOpenState() {
+void PVC_KEV1N::contOpenState() {
     cont.setOpen(true);
     state = State::DISCHARGE;
     state_start_time = time::millis();
@@ -249,12 +249,12 @@ void PreChargeKEV1N::contOpenState() {
     prevState = state;
 }
 
-void PreChargeKEV1N::contCloseState() {
+void PVC_KEV1N::contCloseState() {
     cont.setOpen(false);
     if (stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
         state = State::FORWARD_DISABLE;
     } else if (stoStatus == IO::GPIO::State::HIGH && keyInStatus == IO::GPIO::State::HIGH) {
-        setAPM(PreChargeKEV1N::PinStatus::ENABLE);
+        setAPM(PVC_KEV1N::PinStatus::ENABLE);
 
         //CAN message to wake TMS
         uint8_t payload[1] = {0x01};
@@ -269,10 +269,10 @@ void PreChargeKEV1N::contCloseState() {
     prevState = state;
 }
 
-void PreChargeKEV1N::forwardDisableState() {
-    setPrecharge(PreChargeKEV1N::PinStatus::DISABLE);
+void PVC_KEV1N::forwardDisableState() {
+    setPrecharge(PVC_KEV1N::PinStatus::DISABLE);
     if ((time::millis() - state_start_time) > FORWARD_DISABLE_DELAY) {
-        setAPM(PreChargeKEV1N::PinStatus::DISABLE);
+        setAPM(PVC_KEV1N::PinStatus::DISABLE);
 
         //CAN message to send TMS into pre-op state
         uint8_t payload[1] = {0x80};
@@ -287,19 +287,19 @@ void PreChargeKEV1N::forwardDisableState() {
     prevState = state;
 }
 
-CO_OBJ_T* PreChargeKEV1N::getObjectDictionary() {
+CO_OBJ_T* PVC_KEV1N::getObjectDictionary() {
     return &objectDictionary[0];
 }
 
-uint8_t PreChargeKEV1N::getNumElements() {
+uint8_t PVC_KEV1N::getNumElements() {
     return OBJECT_DICTIONARY_SIZE;
 }
 
-uint8_t PreChargeKEV1N::getNodeID() {
+uint8_t PVC_KEV1N::getNodeID() {
     return NODE_ID;
 }
 
-void PreChargeKEV1N::sendChangePDO() {
+void PVC_KEV1N::sendChangePDO() {
     uint8_t payload[] = {
         Statusword,
         0x00,
@@ -315,4 +315,4 @@ void PreChargeKEV1N::sendChangePDO() {
                                state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, contStatus);
 }
 
-}// namespace PreCharge
+}// namespace PVC

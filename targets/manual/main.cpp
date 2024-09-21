@@ -1,9 +1,9 @@
 #include <cstring>
 
+#include "PVC/PVC.hpp"
 #include <EVT/io/GPIO.hpp>
 #include <EVT/io/UART.hpp>
 #include <EVT/manager.hpp>
-#include <PreCharge/PreCharge.hpp>
 
 namespace IO = EVT::core::IO;
 
@@ -45,20 +45,20 @@ int main() {
 
     char inputBuffer[MAX_BUFF];
 
-    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600, true);
+    IO::UART& uart = IO::getUART<PVC::PVC::UART_TX_PIN, PVC::PVC::UART_RX_PIN>(9600, true);
 
     // Outputs
-    IO::GPIO& mcuAPMCtl = IO::getGPIO<PreCharge::PreCharge::APM_CTL_PIN>();
+    IO::GPIO& mcuAPMCtl = IO::getGPIO<PVC::PVC::APM_CTL_PIN>();
     //    IO::GPIO& mcuFWEnCtl = IO::getGPIO<IO::Pin::PA_3>();
-    IO::GPIO& mcuPcCtl = IO::getGPIO<PreCharge::PreCharge::PC_CTL_PIN>();
-    IO::GPIO& mcuDcCtl = IO::getGPIO<PreCharge::PreCharge::DC_CTL_PIN>();
-    IO::GPIO& mcuContCtl = IO::getGPIO<PreCharge::PreCharge::CONT1_PIN>();
+    IO::GPIO& mcuPcCtl = IO::getGPIO<PVC::PVC::PC_CTL_PIN>();
+    IO::GPIO& mcuDcCtl = IO::getGPIO<PVC::PVC::DC_CTL_PIN>();
+    IO::GPIO& mcuContCtl = IO::getGPIO<PVC::PVC::CONT1_PIN>();
 
     // Inputs
-    IO::GPIO& mcuEStopStatus = IO::getGPIO<PreCharge::PreCharge::ESTOP_IN_PIN>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& keyInMcu = IO::getGPIO<PreCharge::PreCharge::KEY_IN_PIN>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& battery1Ok = IO::getGPIO<PreCharge::PreCharge::BAT_OK_1_PIN>(IO::GPIO::Direction::INPUT);
-    IO::GPIO& battery2Ok = IO::getGPIO<PreCharge::PreCharge::BAT_OK_2_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& mcuEStopStatus = IO::getGPIO<PVC::PVC::ESTOP_IN_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& keyInMcu = IO::getGPIO<PVC::PVC::KEY_IN_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& battery1Ok = IO::getGPIO<PVC::PVC::BAT_OK_1_PIN>(IO::GPIO::Direction::INPUT);
+    IO::GPIO& battery2Ok = IO::getGPIO<PVC::PVC::BAT_OK_2_PIN>(IO::GPIO::Direction::INPUT);
 
     // Start with everything at 0
     mcuAPMCtl.writePin(IO::GPIO::State::LOW);

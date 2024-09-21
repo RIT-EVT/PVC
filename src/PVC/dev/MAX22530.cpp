@@ -1,6 +1,6 @@
-#include <PreCharge/dev/MAX22530.hpp>
+#include <PVC/dev/MAX22530.hpp>
 
-namespace PreCharge {
+namespace PVC {
 
 MAX22530::MAX22530(IO::SPI& SPI) : spi(SPI) {}
 
@@ -16,4 +16,4 @@ uint8_t MAX22530::readVoltage(uint16_t reg) {
     return convertToVoltage((bytes[0] << 8) | bytes[1]);
 }
 
-}// namespace PreCharge
+}// namespace PVC
