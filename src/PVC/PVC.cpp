@@ -9,18 +9,18 @@ namespace time = EVT::core::time;
 namespace PVC {
 
 PVC::PVC(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-                     IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-                     IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX) : key(key),
-                                                                                    batteryOne(batteryOne),
-                                                                                    batteryTwo(batteryTwo),
-                                                                                    eStop(eStop),
-                                                                                    pc(pc),
-                                                                                    dc(dc),
-                                                                                    cont(cont),
-                                                                                    apm(apm),
-                                                                                    gfdb(gfdb),
-                                                                                    can(can),
-                                                                                    MAX(MAX) {
+         IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+         IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX) : key(key),
+                                                                        batteryOne(batteryOne),
+                                                                        batteryTwo(batteryTwo),
+                                                                        eStop(eStop),
+                                                                        pc(pc),
+                                                                        dc(dc),
+                                                                        cont(cont),
+                                                                        apm(apm),
+                                                                        gfdb(gfdb),
+                                                                        can(can),
+                                                                        MAX(MAX) {
     state = State::MC_OFF;
     prevState = State::MC_OFF;
 
