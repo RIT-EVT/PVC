@@ -101,7 +101,7 @@ int main() {
     CSPins[0] = &IO::getGPIO<PreCharge::PreCharge::SPI_CS>(IO::GPIO::Direction::OUTPUT);
     CSPins[0]->writePin(IO::GPIO::State::HIGH);
     IO::SPI& spi = IO::getSPI<PreCharge::PreCharge::SPI_SCK, PreCharge::PreCharge::SPI_MOSI, PreCharge::PreCharge::SPI_MISO>(CSPins, 1);
-    spi.configureSPI(SPI_SPEED_125KHZ, SPI_MODE0, SPI_MSB_FIRST);
+//    spi.configureSPI(SPI_SPEED_125KHZ, SPI_MODE0, SPI_MSB_FIRST);
     PreCharge::MAX22530 MAX(spi);
 
     // Initialize the timer
@@ -193,8 +193,8 @@ int main() {
     PreCharge::PreCharge::PVCStatus status = PreCharge::PreCharge::PVCStatus::PVC_OK;
 
     while (1) {
-        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Thermistor temp: %dmC",
-                                   static_cast<int>(thermistor.getTempCelcius()));
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "ADC: %d, Thermistor temp: %dmC",
+                                   static_cast<int>(thermistor.getRawADC()), static_cast<int>(thermistor.getTempCelcius()));
 
         PreCharge::PreCharge::PVCStatus current_status = precharge.handle(uart);// Update state machine
 

@@ -193,7 +193,7 @@ uint16_t PreCharge::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) 
 }
 
 uint32_t PreCharge::solveForTemp(uint32_t thermistor_voltage) {
-    return (uint32_t)((0.0000319115 * pow(thermistor_voltage, 3) + (-0.267342 * pow(thermistor_voltage, 2)) + 757.407 * thermistor_voltage - 678944));
+    return (uint32_t)((0.0000317337 * pow(thermistor_voltage, 3) + (-0.265458 * pow(thermistor_voltage, 2)) + (750.782 * thermistor_voltage) - 671217));
 }
 
     void PreCharge::getMCKey() {
