@@ -291,8 +291,12 @@ CO_OBJ_T* PreChargeKEV1N::getObjectDictionary() {
     return &objectDictionary[0];
 }
 
-uint16_t PreChargeKEV1N::getObjectDictionarySize() {
+uint8_t PreChargeKEV1N::getNumElements() {
     return OBJECT_DICTIONARY_SIZE;
+}
+
+uint8_t PreChargeKEV1N::getNodeID() {
+    return NODE_ID;
 }
 
 void PreChargeKEV1N::sendChangePDO() {

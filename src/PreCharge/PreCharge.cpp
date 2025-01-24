@@ -44,7 +44,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     sendChangePDO();
 }
 
-PreCharge::PVCStatus PreCharge::handle(IO::UART& uart) {
+PreCharge::PVCStatus PreCharge::handle() {
     getSTO();     //update value of STO
     getMCKey();   //update value of MC_KEY_IN
     getIOStatus();//update value of IOStatus
@@ -119,8 +119,10 @@ void PreCharge::getSTO() {
             stoStatus = IO::GPIO::State::HIGH;
             numAttemptsMade = 0;
         } else {
-            if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+            // If ESTOP is active, stop immediately; otherwise, give the error attempts to clear
+            if (numAttemptsMade > MAX_STO_ATTEMPTS || eStopActiveStatus == IO::GPIO::State::LOW) {
                 EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
                 cycle_key = 1;
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
@@ -138,8 +140,10 @@ void PreCharge::getSTO() {
             stoStatus = IO::GPIO::State::HIGH;
             numAttemptsMade = 0;
         } else {
-            if (numAttemptsMade > MAX_STO_ATTEMPTS) {
+            // If ESTOP is active, stop immediately; otherwise, give the error attempts to clear
+            if (numAttemptsMade > MAX_STO_ATTEMPTS || eStopActiveStatus == IO::GPIO::State::LOW) {
                 EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
                 cycle_key = 1;
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
@@ -282,7 +286,17 @@ void PreCharge::eStopState() {
         }
         prevState = state;
     }
-    //else stay on E-Stop
+    // Else stay on E-Stop
+
+    // If E-stop is pressed and key is turned, send BMS reset message
+    // Need to reread key to get around cycle requirement
+    if (eStopActiveStatus == IO::GPIO::State::LOW && key.readPin() == IO::GPIO::State::HIGH) {
+        uint8_t payload[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        IO::CANMessage bmsResetMessage(0x7FF, 8, payload, false);
+        for (uint8_t i = 0; i < 5; i++) {
+            can.transmit(bmsResetMessage);
+        }
+    }
 }
 
 void PreCharge::prechargeState() {
@@ -370,8 +384,12 @@ CO_OBJ_T* PreCharge::getObjectDictionary() {
     return &objectDictionary[0];
 }
 
-uint16_t PreCharge::getObjectDictionarySize() {
+uint8_t PreCharge::getNumElements() {
     return OBJECT_DICTIONARY_SIZE;
+}
+
+uint8_t PreCharge::getNodeID() {
+    return NODE_ID;
 }
 
 void PreCharge::sendChangePDO() {
