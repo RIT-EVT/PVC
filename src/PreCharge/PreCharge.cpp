@@ -185,6 +185,12 @@ int PreCharge::getPrechargeStatus() {
         in_precharge = 0;
     }
 
+    // If the thermistor temperature is above the safe threshold, precharge error
+    uint32_t temp = thermistor.getTempCelcius();
+    if (temp > MAX_ALLOWED_TEMP) {
+        status = PrechargeStatus::ERROR;
+    }
+
     return static_cast<int>(status);
 }
 

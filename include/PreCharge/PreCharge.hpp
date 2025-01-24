@@ -110,6 +110,11 @@ public:
     static constexpr uint16_t MAX_STO_ATTEMPTS = 25;
 
     /**
+     * Maximum allowed thermistor temperature in degrees milli-Celsius
+     */
+    static constexpr uint32_t MAX_ALLOWED_TEMP = 75000;
+
+    /**
      * Utility variable which can be used to count the number of attempts that
      * was made to complete a certain actions.
      *
