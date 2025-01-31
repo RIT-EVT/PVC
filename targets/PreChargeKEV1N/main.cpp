@@ -165,7 +165,7 @@ int main() {
     dc.writePin(IO::GPIO::State::LOW);
 
     while (1) {
-        PreCharge::PreChargeKEV1N::PVCStatus current_status = precharge.handle(uart);// Update state machine
+        PreCharge::PreChargeKEV1N::PVCStatus current_status = precharge.process(uart);// Update state machine
 
         if (current_status == PreCharge::PreChargeKEV1N::PVCStatus::PVC_PRE_OP) {
             CONmtSetMode(&canNode.Nmt, CO_PREOP);
@@ -173,13 +173,7 @@ int main() {
             CONmtSetMode(&canNode.Nmt, CO_OPERATIONAL);
         }
 
-        // Process incoming CAN messages
-        CONodeProcess(&canNode);
-        // Update the state of timer based events
-        COTmrService(&canNode.Tmr);
-        // Handle executing timer events that have elapsed
-        COTmrProcess(&canNode.Tmr);
-
+        IO::processCANopenNode(&canNode);
         time::wait(100);// May not be necessary
     }
 }

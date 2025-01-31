@@ -144,15 +144,8 @@ int main() {
     dc.writePin(IO::GPIO::State::LOW);
 
     while (1) {
-        PreCharge::PreCharge::PVCStatus current_status = precharge.handle();// Update state machine
-
-        // Process incoming CAN messages
-        CONodeProcess(&canNode);
-        // Update the state of timer based events
-        COTmrService(&canNode.Tmr);
-        // Handle executing timer events that have elapsed
-        COTmrProcess(&canNode.Tmr);
-
+        precharge.process();// Update state machine
+        IO::processCANopenNode(&canNode);
         time::wait(100);// May not be necessary
     }
 }
