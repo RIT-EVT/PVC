@@ -42,7 +42,7 @@ PreChargeKEV1N::PreChargeKEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& ba
     sendChangePDO();
 }
 
-PreChargeKEV1N::PVCStatus PreChargeKEV1N::handle(IO::UART& uart) {
+PreChargeKEV1N::PVCStatus PreChargeKEV1N::process(IO::UART& uart) {
     getSTO();     //update value of STO
     getMCKey();   //update value of MC_KEY_IN
     getIOStatus();//update value of IOStatus

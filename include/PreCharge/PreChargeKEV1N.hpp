@@ -144,7 +144,7 @@ public:
     /**
      * Handler running the pre-charge state switching
      */
-    PVCStatus handle(IO::UART& uart);
+    PVCStatus process(IO::UART& uart);
 
     /**
      * Get the value of STO (Safe to Operate)
@@ -302,9 +302,9 @@ private:
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
     //    IO::GPIO& forward;
-    /** GFDB instance to handle isolation status*/
+    /** GFDB instance to process isolation status*/
     GFDB::GFDB& gfdb;
-    /** CAN instance to handle CANOpen processes*/
+    /** CAN instance to process CANOpen processes*/
     IO::CAN& can;
 
     MAX22530 MAX;

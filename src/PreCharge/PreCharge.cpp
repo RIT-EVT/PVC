@@ -44,7 +44,7 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     sendChangePDO();
 }
 
-PreCharge::PVCStatus PreCharge::handle() {
+PreCharge::PVCStatus PreCharge::process() {
     getSTO();     //update value of STO
     getMCKey();   //update value of MC_KEY_IN
     getIOStatus();//update value of IOStatus

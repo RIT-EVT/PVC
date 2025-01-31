@@ -154,7 +154,7 @@ public:
      *
      * @return the current status of the PVC, either PVC_OK or PVC_Error
      */
-    PVCStatus handle();
+    PVCStatus process();
 
     /**
      * Get the value of STO (Safe to Operate)
@@ -309,9 +309,9 @@ private:
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
     //    IO::GPIO& forward;
-    /** GFDB instance to handle isolation status*/
+    /** GFDB instance to process isolation status*/
     GFDB::GFDB& gfdb;
-    /** CAN instance to handle CANOpen processes*/
+    /** CAN instance to process CANOpen processes*/
     IO::CAN& can;
     /** Thermistor instance to control the precharge temperature */
     DEV::Thermistor thermistor;
