@@ -5,7 +5,7 @@
 
 namespace IO = EVT::core::IO;
 
-namespace PreCharge {
+namespace PVC {
 
 class Contactor {
 public:
@@ -21,6 +21,6 @@ private:
     bool isOpen = true;
 };
 
-}// namespace PreCharge
+}// namespace PVC
 
 #endif//PRE_CHARGE_INCLUDE_PRECHARGE_DEV_CONTACTOR_HPP

@@ -2,12 +2,12 @@
  * This example prints out voltage reading from the MAX22530 ADC
  */
 
+#include "PVC/PVC.hpp"
 #include <EVT/io/UART.hpp>
 #include <EVT/io/pin.hpp>
 #include <EVT/manager.hpp>
 #include <EVT/utils/log.hpp>
-#include <PreCharge/PreCharge.hpp>
-#include <PreCharge/dev/MAX22530.hpp>
+#include <PVC/dev/MAX22530.hpp>
 
 namespace IO = EVT::core::IO;
 namespace DEV = EVT::core::DEV;
@@ -23,15 +23,15 @@ int main() {
     EVT::core::platform::init();
 
     // Setup IO
-    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600, true);
+    IO::UART& uart = IO::getUART<PVC::PVC::UART_TX_PIN, PVC::PVC::UART_RX_PIN>(9600, true);
 
     // Setup SPI
-    devices[0] = &IO::getGPIO<PreCharge::PreCharge::SPI_CS>(EVT::core::IO::GPIO::Direction::OUTPUT);
+    devices[0] = &IO::getGPIO<PVC::PVC::SPI_CS>(EVT::core::IO::GPIO::Direction::OUTPUT);
     devices[0]->writePin(IO::GPIO::State::HIGH);
-    IO::SPI& spi = IO::getSPI<PreCharge::PreCharge::SPI_SCK, PreCharge::PreCharge::SPI_MOSI, PreCharge::PreCharge::SPI_MISO>(devices, deviceCount);
+    IO::SPI& spi = IO::getSPI<PVC::PVC::SPI_SCK, PVC::PVC::SPI_MOSI, PVC::PVC::SPI_MISO>(devices, deviceCount);
     spi.configureSPI(SPI_SPEED, SPI_MODE0, SPI_MSB_FIRST);
 
-    PreCharge::MAX22530 MAX(spi);
+    PVC::MAX22530 MAX(spi);
 
     while (1) {
         for (int reg = 0x01; reg <= 0x04; reg++) {

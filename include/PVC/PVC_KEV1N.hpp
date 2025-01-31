@@ -7,24 +7,21 @@
 #include <EVT/io/SPI.hpp>
 #include <EVT/io/UART.hpp>
 #include <EVT/io/pin.hpp>
-#include <EVT/io/ADC.hpp>
-#include <EVT/dev/Thermistor.hpp>
-#include <PreCharge/GFDB.hpp>
-#include <PreCharge/dev/Contactor.hpp>
-#include <PreCharge/dev/MAX22530.hpp>
+#include <PVC/GFDB.hpp>
+#include <PVC/dev/Contactor.hpp>
+#include <PVC/dev/MAX22530.hpp>
 #include <co_core.h>
 
 #include <math.h>
 
 namespace IO = EVT::core::IO;
-namespace DEV = EVT::core::DEV;
 
-namespace PreCharge {
+namespace PVC {
 
 /**
  * Represents the pre-charge controller used for DEV1
  */
-class PreCharge : public CANDevice {
+class PVC_KEV1N : public CANDevice {
 public:
     /**
      * Binary representation of the states that the pre-charge controller can be in
@@ -67,7 +64,6 @@ public:
     static constexpr IO::Pin SPI_MISO = IO::Pin::PA_6;
     static constexpr IO::Pin SPI_SCK = IO::Pin::PA_5;
     static constexpr IO::Pin SPI_INT = IO::Pin::PA_8;
-    static constexpr IO::Pin DCR_IN = IO::Pin::PA_0;
 
     enum class PinStatus {
         DISABLE = 0u,
@@ -82,9 +78,12 @@ public:
     };
 
     enum class PVCStatus {
-        PVC_OK = 0u,
-        PVC_ERROR = 1u
+        PVC_OP = 0u,
+        PVC_PRE_OP = 1u,
+        PVC_NONE = 2u
     };
+
+    static PVCStatus pvcStatus;
 
     uint8_t Statusword;//8
 
@@ -95,7 +94,7 @@ public:
     uint64_t changePDO;
     uint64_t cyclicPDO;
 
-    static constexpr uint16_t DISCHARGE_DELAY = 5250;      // 5.25 seconds
+    static constexpr uint16_t PRECHARGE_DELAY = 2000;      // 2 seconds
     static constexpr uint16_t FORWARD_DISABLE_DELAY = 5000;// 5 seconds
 
     static constexpr uint8_t MIN_PACK_VOLTAGE = 70;
@@ -108,11 +107,6 @@ public:
      * before failing
      */
     static constexpr uint16_t MAX_STO_ATTEMPTS = 25;
-
-    /**
-     * Maximum allowed thermistor temperature in degrees milli-Celsius
-     */
-    static constexpr uint32_t MAX_ALLOWED_TEMP = 75000;
 
     /**
      * Utility variable which can be used to count the number of attempts that
@@ -136,13 +130,11 @@ public:
      * @param[in] apm GPIO for apm control
      * @param[in] forward GPIO for forward enable
      * @param[in] gfdb GPIO for gfdb fault signal
-     * @param[in] dcr ADC for MCU_DCR voltage
      * @param[in] can can instance for CANopen
      */
-    PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
+    PVC_KEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
               IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, DEV::Thermistor thermistor,
-              MAX22530 MAX);
+              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -151,10 +143,8 @@ public:
 
     /**
      * Handler running the pre-charge state switching
-     *
-     * @return the current status of the PVC, either PVC_OK or PVC_Error
      */
-    PVCStatus process();
+    PVCStatus process(IO::UART& uart);
 
     /**
      * Get the value of STO (Safe to Operate)
@@ -188,13 +178,6 @@ public:
      * @return float value of expected voltage in Volts
     */
     uint16_t solveForVoltage(uint16_t pack_voltage, uint64_t delta_time);
-
-    /**
-     * ADC to temperature conversion function for the thermistor used on the PVC
-     *
-     * @return temperature in milli celsius
-     */
-    static uint32_t solveForTemp(uint32_t thermistor_voltage);
 
     /**
      * Get the state of MC_KEY_IN
@@ -284,8 +267,18 @@ public:
      */
     void forwardDisableState();
 
+    /**
+     * Get a pointer to the start of the CANopen object dictionary.
+     *
+     * @return Pointer to the start of the CANopen object dictionary.
+     */
     CO_OBJ_T* getObjectDictionary() override;
 
+    /**
+     * Get the number of elements in the object dictionary.
+     *
+     * @return The number of elements in the object dictionary
+     */
     uint8_t getNumElements() override;
 
     uint8_t getNodeID() override;
@@ -313,8 +306,6 @@ private:
     GFDB::GFDB& gfdb;
     /** CAN instance to process CANOpen processes*/
     IO::CAN& can;
-    /** Thermistor instance to control the precharge temperature */
-    DEV::Thermistor thermistor;
 
     MAX22530 MAX;
 
@@ -332,9 +323,7 @@ private:
     uint8_t gfdStatus;
     uint32_t lastPrechargeTime;
 
-    // Status bit to indicate a precharge error
-    // Key must be cycled (on->off->on) to resume state machine
-    uint8_t cycle_key;
+    uint8_t pre_charged;
 
     State state;
     State prevState;
@@ -352,7 +341,6 @@ private:
      * process.
      */
     static constexpr uint8_t OBJECT_DICTIONARY_SIZE = 22;
-
     /**
      * The object dictionary itself. Will be populated by this object during
      * construction.
@@ -360,7 +348,6 @@ private:
      * The plus one is for the special "end of dictionary" marker.
      */
     CO_OBJ_T objectDictionary[OBJECT_DICTIONARY_SIZE + 1] = {
-
         MANDATORY_IDENTIFICATION_ENTRIES_1000_1014,
         HEARTBEAT_PRODUCER_1017(2000),
         IDENTITY_OBJECT_1018,
@@ -385,6 +372,7 @@ private:
 
         // User defined data, this will be where we put elements that can be
         // accessed via SDO and depeneding on configuration PDO
+
         DATA_LINK_START_KEY_21XX(0, 0x01),
         DATA_LINK_21XX(0x00, 0x01, CO_TUNSIGNED8, &state),
 
@@ -393,4 +381,4 @@ private:
     };
 };
 
-}// namespace PreCharge
+}// namespace PVC
