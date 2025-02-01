@@ -1,14 +1,14 @@
 #pragma once
 
-#include <EVT/io/CAN.hpp>
-#include <EVT/io/CANDevice.hpp>
-#include <EVT/io/CANOpenMacros.hpp>
-#include <EVT/io/GPIO.hpp>
-#include <EVT/io/SPI.hpp>
-#include <EVT/io/UART.hpp>
-#include <EVT/io/pin.hpp>
-#include <EVT/io/ADC.hpp>
-#include <EVT/dev/Thermistor.hpp>
+#include <core/io/CAN.hpp>
+#include <core/io/CANDevice.hpp>
+#include <core/io/CANOpenMacros.hpp>
+#include <core/io/GPIO.hpp>
+#include <core/io/SPI.hpp>
+#include <core/io/UART.hpp>
+#include <core/io/pin.hpp>
+#include <core/io/ADC.hpp>
+#include <core/dev/Thermistor.hpp>
 #include <PVC/GFDB.hpp>
 #include <PVC/dev/Contactor.hpp>
 #include <PVC/dev/MAX22530.hpp>
@@ -16,8 +16,8 @@
 
 #include <math.h>
 
-namespace IO = EVT::core::IO;
-namespace DEV = EVT::core::DEV;
+namespace IO = core::io;
+namespace DEV = core::dev;
 
 namespace PVC {
 

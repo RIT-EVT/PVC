@@ -2,20 +2,21 @@
 * This is the primary State machine handler for the pre-charge voltage controller (PVC) board
 */
 
-#include <EVT/io/CANopen.hpp>
-#include <EVT/io/UART.hpp>
-#include <EVT/io/pin.hpp>
-#include <EVT/io/types/CANMessage.hpp>
-#include <EVT/manager.hpp>
-#include <EVT/utils/log.hpp>
-#include <EVT/utils/types/FixedQueue.hpp>
+#include <core/io/CANopen.hpp>
+#include <core/io/UART.hpp>
+#include <core/io/pin.hpp>
+#include <core/io/types/CANMessage.hpp>
+#include <core/manager.hpp>
+#include <core/utils/log.hpp>
+#include <core/utils/types/FixedQueue.hpp>
+#include <core/dev/Thermistor.hpp>
 
 #include "PVC/PVC.hpp"
 #include <PVC/GFDB.hpp>
 
-namespace IO = EVT::core::IO;
-namespace DEV = EVT::core::DEV;
-namespace time = EVT::core::time;
+namespace IO = core::io;
+namespace DEV = core::dev;
+namespace time = core::time;
 
 ///////////////////////////////////////////////////////////////////////////////
 // EVT-core CAN callback and CAN setup. This will include logic to set
@@ -23,7 +24,7 @@ namespace time = EVT::core::time;
 ///////////////////////////////////////////////////////////////////////////////
 
 struct CANInterruptParams {
-    EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage>* queue;
+    core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage>* queue;
     IO::CANf3xx* can;
 };
 
@@ -52,10 +53,10 @@ void canInterruptHandler(IO::CANMessage& message, void* priv) {
 
 int main() {
     // Initialize system
-    EVT::core::platform::init();
+    core::platform::init();
 
     // Queue that will store CANopen messages
-    EVT::core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage> canOpenQueue;
+    core::types::FixedQueue<CANOPEN_QUEUE_SIZE, IO::CANMessage> canOpenQueue;
 
     // Initialize CAN, add an IRQ that will populate the above queue
     IO::CAN& can = IO::getCAN<PVC::PVC::CAN_TX_PIN, PVC::PVC::CAN_RX_PIN>();
@@ -70,7 +71,7 @@ int main() {
     CSPins[0] = &IO::getGPIO<PVC::PVC::SPI_CS>(IO::GPIO::Direction::OUTPUT);
     CSPins[0]->writePin(IO::GPIO::State::HIGH);
     IO::SPI& spi = IO::getSPI<PVC::PVC::SPI_SCK, PVC::PVC::SPI_MOSI, PVC::PVC::SPI_MISO>(CSPins, 1);
-    spi.configureSPI(SPI_SPEED_125KHZ, SPI_MODE0, SPI_MSB_FIRST);
+    spi.configureSPI(SPI_SPEED_125KHZ, IO::SPI::SPIMode::SPI_MODE0, SPI_MSB_FIRST);
     PVC::MAX22530 MAX(spi);
 
     // Initialize the timer
@@ -78,9 +79,9 @@ int main() {
 
     // Set up Logger
     IO::UART& uart = IO::getUART<PVC::PVC::UART_TX_PIN, PVC::PVC::UART_RX_PIN>(9600, true);
-    EVT::core::log::LOGGER.setUART(&uart);
-    EVT::core::log::LOGGER.setLogLevel(EVT::core::log::Logger::LogLevel::DEBUG);
-    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Logger initialized.");
+    core::log::LOGGER.setUART(&uart);
+    core::log::LOGGER.setLogLevel(core::log::Logger::LogLevel::DEBUG);
+    core::log::LOGGER.log(core::log::Logger::LogLevel::DEBUG, "Logger initialized.");
     timer.stopTimer();
 
     // Reserved memory for CANopen stack usage
@@ -91,7 +92,7 @@ int main() {
     IO::CAN::CANStatus result = can.connect();
 
     if (result != IO::CAN::CANStatus::OK) {
-        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Failed to connect to CAN network");
+        core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Failed to connect to CAN network");
         return 1;
     }
 

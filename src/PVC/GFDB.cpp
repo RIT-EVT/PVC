@@ -1,7 +1,7 @@
 #include <PVC/GFDB.hpp>
 
-namespace IO = EVT::core::IO;
-namespace time = EVT::core::time;
+namespace IO = core::io;
+namespace time = core::time;
 
 namespace GFDB {
 

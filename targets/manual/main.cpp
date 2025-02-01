@@ -1,11 +1,11 @@
 #include <cstring>
 
 #include "PVC/PVC.hpp"
-#include <EVT/io/GPIO.hpp>
-#include <EVT/io/UART.hpp>
-#include <EVT/manager.hpp>
+#include <core/io/GPIO.hpp>
+#include <core/io/UART.hpp>
+#include <core/manager.hpp>
 
-namespace IO = EVT::core::IO;
+namespace IO = core::io;
 
 constexpr size_t MAX_BUFF = 100;
 
@@ -41,7 +41,7 @@ void writeGPIO(IO::UART& uart, IO::GPIO& gpio) {
 
 int main() {
     // Initialize system
-    EVT::core::platform::init();
+    core::platform::init();
 
     char inputBuffer[MAX_BUFF];
 

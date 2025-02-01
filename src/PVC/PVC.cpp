@@ -1,10 +1,10 @@
 #include <PVC/PVC.hpp>
 
-#include <EVT/utils/log.hpp>
-#include <EVT/utils/time.hpp>
+#include <core/utils/log.hpp>
+#include <core/utils/time.hpp>
 
-namespace IO = EVT::core::IO;
-namespace time = EVT::core::time;
+namespace IO = core::io;
+namespace time = core::time;
 
 namespace PVC {
 
@@ -100,7 +100,7 @@ void PVC::getSTO() {
         if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
             gfdStatus = 1;
         } else if (gfdBuffer == 0b11) {
-            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Bad GFDB");
+            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Bad GFDB");
             gfdStatus = 0;
         }
     }
@@ -121,14 +121,14 @@ void PVC::getSTO() {
         } else {
             // If ESTOP is active, stop immediately; otherwise, give the error attempts to clear
             if (numAttemptsMade > MAX_STO_ATTEMPTS || eStopActiveStatus == IO::GPIO::State::LOW) {
-                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
-                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
+                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
                 cycle_key = 1;
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
                 return;
             }
-            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
+            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
 
             numAttemptsMade++;
         }
@@ -142,14 +142,14 @@ void PVC::getSTO() {
         } else {
             // If ESTOP is active, stop immediately; otherwise, give the error attempts to clear
             if (numAttemptsMade > MAX_STO_ATTEMPTS || eStopActiveStatus == IO::GPIO::State::LOW) {
-                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
-                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
+                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
                 cycle_key = 1;
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
                 return;
             }
-            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
+            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
 
             numAttemptsMade++;
         }
@@ -183,7 +183,7 @@ int PVC::getPrechargeStatus() {
             status = PrechargeStatus::OK;
         }
     } else {
-        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Meas: %d, Exp: %d, Pack: %d", measured_voltage, expected_voltage, pack_voltage);
+        core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Meas: %d, Exp: %d, Pack: %d", measured_voltage, expected_voltage, pack_voltage);
         status = PrechargeStatus::ERROR;
         cycle_key = 1;
         in_precharge = 0;
@@ -305,10 +305,10 @@ void PVC::prechargeState() {
 
     // Stay in prechargeState until DONE unless ERROR
     if (precharging == static_cast<int>(PrechargeStatus::ERROR) || stoStatus == IO::GPIO::State::LOW || keyInStatus == IO::GPIO::State::LOW) {
-        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Precharge error");
+        core::log::LOGGER.log(core::log::Logger::LogLevel::DEBUG, "Precharge error");
         state = State::FORWARD_DISABLE;
     } else if (precharging == static_cast<int>(PrechargeStatus::DONE)) {
-        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "Precharge done");
+        core::log::LOGGER.log(core::log::Logger::LogLevel::DEBUG, "Precharge done");
         state = State::CONT_CLOSE;
     }
     if (prevState != state) {
@@ -404,7 +404,7 @@ void PVC::sendChangePDO() {
     IO::CANMessage changePDOMessage(0x48A, 7, payload, false);
     can.transmit(changePDOMessage);
 
-    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; a: %d, pc: %d, dc: %d, c: %d, v: %d",
+    core::log::LOGGER.log(core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; a: %d, pc: %d, dc: %d, c: %d, v: %d",
                                state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, contStatus, voltStatus);
 }
 

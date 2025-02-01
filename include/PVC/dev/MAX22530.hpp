@@ -1,8 +1,8 @@
 #pragma once
-#include <EVT/io/SPI.hpp>
+#include <core/io/SPI.hpp>
 #include <cstdint>
 
-namespace IO = EVT::core::IO;
+namespace IO = core::io;
 
 namespace PVC {
 

@@ -1,10 +1,10 @@
 #include <PVC/PVC_KEV1N.hpp>
 
-#include <EVT/utils/log.hpp>
-#include <EVT/utils/time.hpp>
+#include <core/utils/log.hpp>
+#include <core/utils/time.hpp>
 
-namespace IO = EVT::core::IO;
-namespace time = EVT::core::time;
+namespace IO = core::io;
+namespace time = core::time;
 
 namespace PVC {
 
@@ -94,7 +94,7 @@ void PVC_KEV1N::getSTO() {
         if (gfdbConn == IO::CAN::CANStatus::OK && (gfdBuffer == 0b00 || gfdBuffer == 0b10)) {
             gfdStatus = 1;
         } else if (gfdBuffer == 0b11) {
-            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Bad GFDB");
+            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Bad GFDB");
             gfdStatus = 0;
         }
     }
@@ -114,12 +114,12 @@ void PVC_KEV1N::getSTO() {
             numAttemptsMade = 0;
         } else {
             if (numAttemptsMade > MAX_STO_ATTEMPTS) {
-                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
                 return;
             }
-            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
+            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
 
             numAttemptsMade++;
         }
@@ -132,12 +132,12 @@ void PVC_KEV1N::getSTO() {
             numAttemptsMade = 0;
         } else {
             if (numAttemptsMade > MAX_STO_ATTEMPTS) {
-                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
+                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
                 return;
             }
-            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
+            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
 
             numAttemptsMade++;
         }
@@ -311,7 +311,7 @@ void PVC_KEV1N::sendChangePDO() {
     IO::CANMessage changePDOMessage(0x48A, 7, &payload[0], false);
     can.transmit(changePDOMessage);
 
-    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; f: %d, pc: %d, dc: %d, c: %d, apm: %d",
+    core::log::LOGGER.log(core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; f: %d, pc: %d, dc: %d, c: %d, apm: %d",
                                state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, contStatus);
 }
 

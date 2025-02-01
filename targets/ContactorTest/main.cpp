@@ -1,9 +1,9 @@
 #include "PVC/PVC.hpp"
-#include <EVT/manager.hpp>
+#include <core/manager.hpp>
 #include <PVC/dev/Contactor.hpp>
 
 int main() {
-    EVT::core::platform::init();
+    core::platform::init();
 
     PVC::Contactor cont(IO::getGPIO<PVC::PVC::CONT1_PIN>(),
                               IO::getGPIO<PVC::PVC::CONT2_PIN>());
@@ -13,6 +13,6 @@ int main() {
         cont.setOpen(i % 2);
 
         i++;
-        EVT::core::time::wait(1000);
+        core::time::wait(1000);
     }
 }

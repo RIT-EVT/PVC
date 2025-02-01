@@ -1,9 +1,9 @@
 #ifndef PRE_CHARGE_INCLUDE_PRECHARGE_DEV_CONTACTOR_HPP
 #define PRE_CHARGE_INCLUDE_PRECHARGE_DEV_CONTACTOR_HPP
 
-#include <EVT/io/GPIO.hpp>
+#include <core/io/GPIO.hpp>
 
-namespace IO = EVT::core::IO;
+namespace IO = core::io;
 
 namespace PVC {
 
