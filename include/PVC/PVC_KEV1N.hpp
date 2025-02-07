@@ -1,8 +1,5 @@
 #pragma once
 
-#include <PVC/GFDB.hpp>
-#include <PVC/dev/Contactor.hpp>
-#include <PVC/dev/MAX22530.hpp>
 #include <co_core.h>
 #include <core/io/CAN.hpp>
 #include <core/io/CANDevice.hpp>
@@ -13,6 +10,10 @@
 #include <core/io/pin.hpp>
 
 #include <math.h>
+
+#include <PVC/GFDB.hpp>
+#include <PVC/dev/Contactor.hpp>
+#include <PVC/dev/MAX22530.hpp>
 
 namespace IO = core::io;
 

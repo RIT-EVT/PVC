@@ -18,7 +18,7 @@ int main() {
     core::platform::init();
 
     IO::ADC& dcr = IO::getADC<PVC::PVC::DCR_IN>();
-    DEV::Thermistor thermistor{dcr, PVC::PVC::solveForTemp};
+    DEV::Thermistor thermistor(dcr, PVC::PVC::solveForTemp);
     IO::UART& uart = IO::getUART<PVC::PVC::UART_TX_PIN, PVC::PVC::UART_RX_PIN>(9600, false);
 
     uart.printf("Starting thermistor test...");

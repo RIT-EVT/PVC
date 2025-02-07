@@ -1,5 +1,6 @@
-#include <PVC/dev/Contactor.hpp>
 #include <core/utils/time.hpp>
+
+#include <PVC/dev/Contactor.hpp>
 
 namespace time = core::time;
 

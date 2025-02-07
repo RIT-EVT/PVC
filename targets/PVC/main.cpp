@@ -108,7 +108,7 @@ int main() {
         IO::getGPIO<PVC::PVC::CONT2_PIN>(IO::GPIO::Direction::OUTPUT));
     IO::GPIO& apm = IO::getGPIO<PVC::PVC::APM_CTL_PIN>(IO::GPIO::Direction::OUTPUT);
     IO::ADC& dcr = IO::getADC<PVC::PVC::DCR_IN>();
-    DEV::Thermistor thermistor{dcr, PVC::PVC::solveForTemp};
+    DEV::Thermistor thermistor(dcr, PVC::PVC::solveForTemp);
     //    IO::GPIO& forward = IO::getGPIO<IO::Pin::PA_3>(IO::GPIO::Direction::OUTPUT);
     GFDB::GFDB gfdb(can);
     PVC::PVC precharge(key, batteryOne, batteryTwo, eStop, pc, dc, cont, apm, gfdb, can, thermistor, MAX);
