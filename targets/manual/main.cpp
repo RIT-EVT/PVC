@@ -1,9 +1,10 @@
 #include <cstring>
 
-#include "PVC/PVC.hpp"
 #include <core/io/GPIO.hpp>
 #include <core/io/UART.hpp>
 #include <core/manager.hpp>
+
+#include <PVC/PVC.hpp>
 
 namespace IO = core::io;
 
