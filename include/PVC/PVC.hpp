@@ -190,9 +190,9 @@ public:
     uint16_t solveForVoltage(uint16_t pack_voltage, uint64_t delta_time);
 
     /**
-     * ADC to temperature conversion function for the thermistor used on the PVC
+     * Converts the thermistor ADC voltage value to millicelsius.
      *
-     * @return temperature in milli celsius
+     * @return the temperature in millicelsius
      */
     static uint32_t solveForTemp(uint32_t thermistor_voltage);
 
