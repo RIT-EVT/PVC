@@ -192,6 +192,8 @@ int PVC::getPrechargeStatus() {
     // If the thermistor temperature is above the safe threshold, precharge error
     uint32_t temp = thermistor.getTempCelcius();
     if (temp > MAX_ALLOWED_TEMP) {
+        core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Thermistor overheat");
+        core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Temp: %d", temp);
         status = PrechargeStatus::ERROR;
     }
 
@@ -203,7 +205,10 @@ uint16_t PVC::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
 }
 
 uint32_t PVC::solveForTemp(uint32_t thermistor_voltage) {
-    return (uint32_t)((0.0000317337 * pow(thermistor_voltage, 3) + (-0.265458 * pow(thermistor_voltage, 2)) + (750.782 * thermistor_voltage) - 671217));
+    return (uint32_t)((0.0000317337 * (thermistor_voltage * thermistor_voltage * thermistor_voltage)
+                        + (-0.265458 * (thermistor_voltage * thermistor_voltage))
+                        + (750.782 * thermistor_voltage)
+                        - 671217));
 }
 
     void PVC::getMCKey() {
