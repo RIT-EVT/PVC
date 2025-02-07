@@ -3,11 +3,11 @@
  */
 
 #include "PVC/PVC.hpp"
+#include <PVC/dev/MAX22530.hpp>
 #include <core/io/UART.hpp>
 #include <core/io/pin.hpp>
 #include <core/manager.hpp>
 #include <core/utils/log.hpp>
-#include <PVC/dev/MAX22530.hpp>
 
 namespace IO = core::io;
 namespace DEV = core::dev;

@@ -2,9 +2,9 @@
 * This is the primary State machine handler for the pre-charge voltage controller (PVC) board
 */
 
+#include <core/dev/Thermistor.hpp>
 #include <core/io/UART.hpp>
 #include <core/manager.hpp>
-#include <core/dev/Thermistor.hpp>
 
 #include <PVC/GFDB.hpp>
 #include <PVC/PVC.hpp>
@@ -18,7 +18,7 @@ int main() {
     core::platform::init();
 
     IO::ADC& dcr = IO::getADC<PVC::PVC::DCR_IN>();
-    DEV::Thermistor thermistor {dcr, PVC::PVC::solveForTemp};
+    DEV::Thermistor thermistor{dcr, PVC::PVC::solveForTemp};
     IO::UART& uart = IO::getUART<PVC::PVC::UART_TX_PIN, PVC::PVC::UART_RX_PIN>(9600, false);
 
     uart.printf("Starting thermistor test...");

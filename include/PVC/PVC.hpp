@@ -1,5 +1,11 @@
 #pragma once
 
+#include <PVC/GFDB.hpp>
+#include <PVC/dev/Contactor.hpp>
+#include <PVC/dev/MAX22530.hpp>
+#include <co_core.h>
+#include <core/dev/Thermistor.hpp>
+#include <core/io/ADC.hpp>
 #include <core/io/CAN.hpp>
 #include <core/io/CANDevice.hpp>
 #include <core/io/CANOpenMacros.hpp>
@@ -7,12 +13,6 @@
 #include <core/io/SPI.hpp>
 #include <core/io/UART.hpp>
 #include <core/io/pin.hpp>
-#include <core/io/ADC.hpp>
-#include <core/dev/Thermistor.hpp>
-#include <PVC/GFDB.hpp>
-#include <PVC/dev/Contactor.hpp>
-#include <PVC/dev/MAX22530.hpp>
-#include <co_core.h>
 
 #include <math.h>
 

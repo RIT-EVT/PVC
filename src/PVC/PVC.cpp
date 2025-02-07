@@ -12,17 +12,17 @@ PVC::PVC(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
          IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
          IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can,
          DEV::Thermistor thermistor, MAX22530 MAX) : key(key),
-                                                                        batteryOne(batteryOne),
-                                                                        batteryTwo(batteryTwo),
-                                                                        eStop(eStop),
-                                                                        pc(pc),
-                                                                        dc(dc),
-                                                                        cont(cont),
-                                                                        apm(apm),
-                                                                        gfdb(gfdb),
-                                                                        can(can),
-                                                                        thermistor(thermistor),
-                                                                        MAX(MAX) {
+                                                     batteryOne(batteryOne),
+                                                     batteryTwo(batteryTwo),
+                                                     eStop(eStop),
+                                                     pc(pc),
+                                                     dc(dc),
+                                                     cont(cont),
+                                                     apm(apm),
+                                                     gfdb(gfdb),
+                                                     can(can),
+                                                     thermistor(thermistor),
+                                                     MAX(MAX) {
     state = State::MC_OFF;
     prevState = State::MC_OFF;
 
@@ -205,13 +205,13 @@ uint16_t PVC::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
 }
 
 uint32_t PVC::solveForTemp(uint32_t thermistor_voltage) {
-    return (uint32_t)((0.0000317337 * (thermistor_voltage * thermistor_voltage * thermistor_voltage)
+    return (uint32_t) ((0.0000317337 * (thermistor_voltage * thermistor_voltage * thermistor_voltage)
                         + (-0.265458 * (thermistor_voltage * thermistor_voltage))
                         + (750.782 * thermistor_voltage)
                         - 671217));
 }
 
-    void PVC::getMCKey() {
+void PVC::getMCKey() {
     if (cycle_key) {
         if (key.readPin() == IO::GPIO::State::LOW) {
             cycle_key = 0;
@@ -410,7 +410,7 @@ void PVC::sendChangePDO() {
     can.transmit(changePDOMessage);
 
     core::log::LOGGER.log(core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; a: %d, pc: %d, dc: %d, c: %d, v: %d",
-                               state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, contStatus, voltStatus);
+                          state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, contStatus, voltStatus);
 }
 
 }// namespace PVC
