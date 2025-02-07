@@ -11,7 +11,7 @@
 #include <core/utils/log.hpp>
 #include <core/utils/types/FixedQueue.hpp>
 
-#include "PVC/PVC.hpp"
+#include <PVC/PVC.hpp>
 #include <PVC/GFDB.hpp>
 
 namespace IO = core::io;
