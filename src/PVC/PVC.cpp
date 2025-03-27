@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include <core/utils/log.hpp>
 #include <core/utils/time.hpp>
 
@@ -110,6 +112,8 @@ void PVC::getSTO() {
     eStopActiveStatus = eStop.readPin();
     voltStatus = MAX.readVoltage(0x02) > MIN_PACK_VOLTAGE;
 
+    char messageString[30];
+    snprintf(messageString, 30, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
     if (in_precharge == 2) {
         if (batteryOneOkStatus == IO::GPIO::State::HIGH
             && batteryTwoOkStatus == IO::GPIO::State::HIGH
@@ -121,14 +125,13 @@ void PVC::getSTO() {
         } else {
             // If ESTOP is active, stop immediately; otherwise, give the error attempts to clear
             if (numAttemptsMade > MAX_STO_ATTEMPTS || eStopActiveStatus == IO::GPIO::State::LOW) {
-                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
-                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
+                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Too many fails, error out; %s", messageString);
                 cycle_key = 1;
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
                 return;
             }
-            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d, g: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, gfdStatus);
+            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "%s", messageString);
 
             numAttemptsMade++;
         }
@@ -142,14 +145,13 @@ void PVC::getSTO() {
         } else {
             // If ESTOP is active, stop immediately; otherwise, give the error attempts to clear
             if (numAttemptsMade > MAX_STO_ATTEMPTS || eStopActiveStatus == IO::GPIO::State::LOW) {
-                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
-                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
+                core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "Too many fails, error out; %s", messageString);
                 cycle_key = 1;
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
                 return;
             }
-            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
+            core::log::LOGGER.log(core::log::Logger::LogLevel::ERROR, "%s", messageString);
 
             numAttemptsMade++;
         }
@@ -201,6 +203,7 @@ int PVC::getPrechargeStatus() {
 }
 
 uint16_t PVC::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
+//    return initVolt; // temp just to test something
     return initVolt + ((pack_voltage - initVolt) * (1 - exp(-(delta_time / (1000 * 30 * 0.014)))));
 }
 
