@@ -203,7 +203,7 @@ int PVC::getPrechargeStatus() {
 }
 
 uint16_t PVC::solveForVoltage(uint16_t pack_voltage, uint64_t delta_time) {
-//    return initVolt; // temp just to test something
+    //    return initVolt; // temp just to test something
     return initVolt + ((pack_voltage - initVolt) * (1 - exp(-(delta_time / (1000 * 30 * 0.014)))));
 }
 
