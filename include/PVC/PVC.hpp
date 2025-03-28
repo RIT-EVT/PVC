@@ -1,27 +1,31 @@
 #pragma once
 
-#include <EVT/io/CAN.hpp>
-#include <EVT/io/CANDevice.hpp>
-#include <EVT/io/CANOpenMacros.hpp>
-#include <EVT/io/GPIO.hpp>
-#include <EVT/io/SPI.hpp>
-#include <EVT/io/UART.hpp>
-#include <EVT/io/pin.hpp>
-#include <PreCharge/GFDB.hpp>
-#include <PreCharge/dev/Contactor.hpp>
-#include <PreCharge/dev/MAX22530.hpp>
 #include <co_core.h>
+#include <core/dev/Thermistor.hpp>
+#include <core/io/ADC.hpp>
+#include <core/io/CAN.hpp>
+#include <core/io/CANDevice.hpp>
+#include <core/io/CANOpenMacros.hpp>
+#include <core/io/GPIO.hpp>
+#include <core/io/SPI.hpp>
+#include <core/io/UART.hpp>
+#include <core/io/pin.hpp>
 
 #include <math.h>
 
-namespace IO = EVT::core::IO;
+#include <PVC/GFDB.hpp>
+#include <PVC/dev/Contactor.hpp>
+#include <PVC/dev/MAX22530.hpp>
 
-namespace PreCharge {
+namespace IO = core::io;
+namespace DEV = core::dev;
+
+namespace PVC {
 
 /**
  * Represents the pre-charge controller used for DEV1
  */
-class PreCharge : public CANDevice {
+class PVC : public CANDevice {
 public:
     /**
      * Binary representation of the states that the pre-charge controller can be in
@@ -64,6 +68,7 @@ public:
     static constexpr IO::Pin SPI_MISO = IO::Pin::PA_6;
     static constexpr IO::Pin SPI_SCK = IO::Pin::PA_5;
     static constexpr IO::Pin SPI_INT = IO::Pin::PA_8;
+    static constexpr IO::Pin DCR_IN = IO::Pin::PA_0;
 
     enum class PinStatus {
         DISABLE = 0u,
@@ -106,6 +111,11 @@ public:
     static constexpr uint16_t MAX_STO_ATTEMPTS = 25;
 
     /**
+     * Maximum allowed thermistor temperature in degrees milli-Celsius
+     */
+    static constexpr uint32_t MAX_ALLOWED_TEMP = 75000;
+
+    /**
      * Utility variable which can be used to count the number of attempts that
      * was made to complete a certain actions.
      *
@@ -127,11 +137,13 @@ public:
      * @param[in] apm GPIO for apm control
      * @param[in] forward GPIO for forward enable
      * @param[in] gfdb GPIO for gfdb fault signal
+     * @param[in] dcr ADC for MCU_DCR voltage
      * @param[in] can can instance for CANopen
      */
-    PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
+    PVC(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
+        IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+        IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, DEV::Thermistor thermistor,
+        MAX22530 MAX);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -143,7 +155,7 @@ public:
      *
      * @return the current status of the PVC, either PVC_OK or PVC_Error
      */
-    PVCStatus handle();
+    PVCStatus process();
 
     /**
      * Get the value of STO (Safe to Operate)
@@ -177,6 +189,13 @@ public:
      * @return float value of expected voltage in Volts
     */
     uint16_t solveForVoltage(uint16_t pack_voltage, uint64_t delta_time);
+
+    /**
+     * Converts the thermistor ADC voltage value to millicelsius.
+     *
+     * @return the temperature in millicelsius
+     */
+    static uint32_t solveForTemp(uint32_t thermistor_voltage);
 
     /**
      * Get the state of MC_KEY_IN
@@ -291,10 +310,12 @@ private:
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
     //    IO::GPIO& forward;
-    /** GFDB instance to handle isolation status*/
+    /** GFDB instance to process isolation status*/
     GFDB::GFDB& gfdb;
-    /** CAN instance to handle CANOpen processes*/
+    /** CAN instance to process CANOpen processes*/
     IO::CAN& can;
+    /** Thermistor instance to control the precharge temperature */
+    DEV::Thermistor thermistor;
 
     MAX22530 MAX;
 
@@ -373,4 +394,4 @@ private:
     };
 };
 
-}// namespace PreCharge
+}// namespace PVC

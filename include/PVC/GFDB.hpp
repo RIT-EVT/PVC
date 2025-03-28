@@ -1,11 +1,11 @@
 #ifndef _EVT_GFDB_H
 #define _EVT_GFDB_H
 
-#include <EVT/io/CAN.hpp>
-#include <EVT/utils/time.hpp>
+#include <core/io/CAN.hpp>
+#include <core/utils/time.hpp>
 #include <stddef.h>
 
-namespace IO = EVT::core::IO;
+namespace IO = core::io;
 
 namespace GFDB {
 

@@ -1,14 +1,15 @@
-#include <EVT/utils/time.hpp>
-#include <PreCharge/dev/Contactor.hpp>
+#include <core/utils/time.hpp>
 
-namespace time = EVT::core::time;
+#include <PVC/dev/Contactor.hpp>
 
-PreCharge::Contactor::Contactor(IO::GPIO& cont1, IO::GPIO& cont2) : cont1(cont1), cont2(cont2) {
+namespace time = core::time;
+
+PVC::Contactor::Contactor(IO::GPIO& cont1, IO::GPIO& cont2) : cont1(cont1), cont2(cont2) {
     cont1.writePin(IO::GPIO::State::LOW);
     cont2.writePin(IO::GPIO::State::LOW);
 }
 
-void PreCharge::Contactor::setOpen(bool shouldOpen) {
+void PVC::Contactor::setOpen(bool shouldOpen) {
     if (shouldOpen == isOpen) {
         return;
     }
@@ -24,6 +25,6 @@ void PreCharge::Contactor::setOpen(bool shouldOpen) {
     isOpen = shouldOpen;
 }
 
-bool PreCharge::Contactor::openState() {
+bool PVC::Contactor::openState() {
     return isOpen;
 }

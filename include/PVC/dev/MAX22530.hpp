@@ -1,10 +1,10 @@
 #pragma once
-#include <EVT/io/SPI.hpp>
+#include <core/io/SPI.hpp>
 #include <cstdint>
 
-namespace IO = EVT::core::IO;
+namespace IO = core::io;
 
-namespace PreCharge {
+namespace PVC {
 
 /**
  * Handles reading voltage data from the MAX22530 ADC
@@ -33,4 +33,4 @@ private:
     static uint8_t convertToVoltage(uint16_t count);
 };
 
-}// namespace PreCharge
+}// namespace PVC

@@ -1,14 +1,14 @@
 /**
  * SIM100 Driver Test
  */
-#include <EVT/io/CAN.hpp>
-#include <EVT/manager.hpp>
-#include <EVT/utils/time.hpp>
-#include <PreCharge/GFDB.hpp>
-#include <PreCharge/PreCharge.hpp>
+#include "PVC/PVC.hpp"
+#include <PVC/GFDB.hpp>
+#include <core/io/CAN.hpp>
+#include <core/manager.hpp>
+#include <core/utils/time.hpp>
 
-namespace IO = EVT::core::IO;
-namespace time = EVT::core::time;
+namespace IO = core::io;
+namespace time = core::time;
 
 void canIRQHandler(IO::CANMessage& message, void* priv) {
     IO::CANf3xx* can = (IO::CANf3xx*) priv;
@@ -17,11 +17,11 @@ void canIRQHandler(IO::CANMessage& message, void* priv) {
 
 int main() {
     // Initialize system
-    EVT::core::platform::init();
+    core::platform::init();
 
     // Get CAN instance with loopback enabled
-    IO::CAN& can = IO::getCAN<PreCharge::PreCharge::CAN_TX_PIN, PreCharge::PreCharge::CAN_RX_PIN>();
-    IO::UART& uart = IO::getUART<PreCharge::PreCharge::UART_TX_PIN, PreCharge::PreCharge::UART_RX_PIN>(9600, true);
+    IO::CAN& can = IO::getCAN<PVC::PVC::CAN_TX_PIN, PVC::PVC::CAN_RX_PIN>();
+    IO::UART& uart = IO::getUART<PVC::PVC::UART_TX_PIN, PVC::PVC::UART_RX_PIN>(9600, true);
     can.addIRQHandler(canIRQHandler, &can);
 
     uart.printf("Starting GFDB tests\r\n");

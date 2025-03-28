@@ -1,27 +1,28 @@
 #pragma once
 
-#include <EVT/io/CAN.hpp>
-#include <EVT/io/CANDevice.hpp>
-#include <EVT/io/CANOpenMacros.hpp>
-#include <EVT/io/GPIO.hpp>
-#include <EVT/io/SPI.hpp>
-#include <EVT/io/UART.hpp>
-#include <EVT/io/pin.hpp>
-#include <PreCharge/GFDB.hpp>
-#include <PreCharge/dev/Contactor.hpp>
-#include <PreCharge/dev/MAX22530.hpp>
 #include <co_core.h>
+#include <core/io/CAN.hpp>
+#include <core/io/CANDevice.hpp>
+#include <core/io/CANOpenMacros.hpp>
+#include <core/io/GPIO.hpp>
+#include <core/io/SPI.hpp>
+#include <core/io/UART.hpp>
+#include <core/io/pin.hpp>
 
 #include <math.h>
 
-namespace IO = EVT::core::IO;
+#include <PVC/GFDB.hpp>
+#include <PVC/dev/Contactor.hpp>
+#include <PVC/dev/MAX22530.hpp>
 
-namespace PreCharge {
+namespace IO = core::io;
+
+namespace PVC {
 
 /**
  * Represents the pre-charge controller used for DEV1
  */
-class PreChargeKEV1N : public CANDevice {
+class PVC_KEV1N : public CANDevice {
 public:
     /**
      * Binary representation of the states that the pre-charge controller can be in
@@ -132,9 +133,9 @@ public:
      * @param[in] gfdb GPIO for gfdb fault signal
      * @param[in] can can instance for CANopen
      */
-    PreChargeKEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
-                   IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
-                   IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
+    PVC_KEV1N(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
+              IO::GPIO& eStop, IO::GPIO& pc, IO::GPIO& dc, Contactor cont,
+              IO::GPIO& apm, GFDB::GFDB& gfdb, IO::CAN& can, MAX22530 MAX);
 
     /**
      * The node ID used to identify the device on the CAN network.
@@ -144,7 +145,7 @@ public:
     /**
      * Handler running the pre-charge state switching
      */
-    PVCStatus handle(IO::UART& uart);
+    PVCStatus process(IO::UART& uart);
 
     /**
      * Get the value of STO (Safe to Operate)
@@ -302,9 +303,9 @@ private:
     IO::GPIO& apm;
     /** GPIO instance to toggle FW_EN_CTL */
     //    IO::GPIO& forward;
-    /** GFDB instance to handle isolation status*/
+    /** GFDB instance to process isolation status*/
     GFDB::GFDB& gfdb;
-    /** CAN instance to handle CANOpen processes*/
+    /** CAN instance to process CANOpen processes*/
     IO::CAN& can;
 
     MAX22530 MAX;
@@ -381,4 +382,4 @@ private:
     };
 };
 
-}// namespace PreCharge
+}// namespace PVC
