@@ -35,6 +35,9 @@ PreCharge::PreCharge(IO::GPIO& key, IO::GPIO& batteryOne, IO::GPIO& batteryTwo,
     voltStatus = 0;
     apmStatus = IO::GPIO::State::LOW;
 
+    //open the contactor to begin
+    cont.setOpen(true);
+
     gfdStatus = 1;
     initVolt = 0;
 
@@ -131,23 +134,24 @@ void PreCharge::getSTO() {
             numAttemptsMade++;
         }
     } else {
-        if (batteryOneOkStatus == IO::GPIO::State::HIGH
-            && batteryTwoOkStatus == IO::GPIO::State::HIGH
-            && eStopActiveStatus == IO::GPIO::State::HIGH
-            && voltStatus == 1) {
+        if (batteryOneOkStatus == IO::GPIO::State::HIGH && batteryTwoOkStatus == IO::GPIO::State::HIGH
+            && eStopActiveStatus == IO::GPIO::State::HIGH && voltStatus == 1) {
             stoStatus = IO::GPIO::State::HIGH;
             numAttemptsMade = 0;
         } else {
             // If ESTOP is active, stop immediately; otherwise, give the error attempts to clear
             if (numAttemptsMade > MAX_STO_ATTEMPTS || eStopActiveStatus == IO::GPIO::State::LOW) {
-                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Too many fails, error out");
-                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR,
+                                           "Too many fails, error out");
+                EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR,
+                                           "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
                 cycle_key = 1;
                 stoStatus = IO::GPIO::State::LOW;
                 numAttemptsMade = 0;
                 return;
             }
-            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
+            EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR,
+                                       "1: %d, 2: %d, e: %d", batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus);
 
             numAttemptsMade++;
         }
@@ -181,7 +185,8 @@ int PreCharge::getPrechargeStatus() {
             status = PrechargeStatus::OK;
         }
     } else {
-        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR, "Meas: %d, Exp: %d, Pack: %d", measured_voltage, expected_voltage, pack_voltage);
+        EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::ERROR,
+                                   "Meas: %d, Exp: %d, Pack: %d", measured_voltage, expected_voltage, pack_voltage);
         status = PrechargeStatus::ERROR;
         cycle_key = 1;
         in_precharge = 0;
@@ -392,7 +397,8 @@ void PreCharge::sendChangePDO() {
     IO::CANMessage changePDOMessage(0x48A, 7, payload, false);
     can.transmit(changePDOMessage);
 
-    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG, "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; a: %d, pc: %d, dc: %d, c: %d, v: %d",
+    EVT::core::log::LOGGER.log(EVT::core::log::Logger::LogLevel::DEBUG,
+                               "s: %d, k: %d; sto: %d; b1: %d; b2: %d; e: %d; a: %d, pc: %d, dc: %d, c: %d, v: %d",
                                state, keyInStatus, stoStatus, batteryOneOkStatus, batteryTwoOkStatus, eStopActiveStatus, apmStatus, pcStatus, dcStatus, contStatus, voltStatus);
 }
 
