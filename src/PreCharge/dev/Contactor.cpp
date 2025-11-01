@@ -9,9 +9,6 @@ PreCharge::Contactor::Contactor(IO::GPIO& cont1, IO::GPIO& cont2) : cont1(cont1)
 }
 
 void PreCharge::Contactor::setOpen(bool shouldOpen) {
-    if (shouldOpen == isOpen) {
-        return;
-    }
     if (shouldOpen) {
         cont1.writePin(IO::GPIO::State::HIGH);
         time::wait(20);
